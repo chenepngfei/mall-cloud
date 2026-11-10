@@ -1,0 +1,2 @@
+cn.afei.mall.framework.tracer.config.MallTracerAutoConfiguration
+cn.afei.mall.framework.tracer.config.MallMetricsAutoConfiguration

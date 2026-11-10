@@ -1,0 +1,5 @@
+cn.afei.mall.framework.security.config.MallSecurityRpcAutoConfiguration
+cn.afei.mall.framework.security.config.MallSecurityAutoConfiguration
+cn.afei.mall.framework.security.config.MallWebSecurityConfigurerAdapter
+cn.afei.mall.framework.operatelog.config.MallOperateLogConfiguration
+cn.afei.mall.framework.operatelog.config.MallOperateLogRpcAutoConfiguration

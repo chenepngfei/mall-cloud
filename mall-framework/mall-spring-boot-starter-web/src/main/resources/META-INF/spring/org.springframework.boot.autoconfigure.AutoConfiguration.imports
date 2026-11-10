@@ -1,0 +1,8 @@
+cn.afei.mall.framework.apilog.config.MallApiLogAutoConfiguration
+cn.afei.mall.framework.jackson.config.MallJacksonAutoConfiguration
+cn.afei.mall.framework.swagger.config.MallSwaggerAutoConfiguration
+cn.afei.mall.framework.web.config.MallWebAutoConfiguration
+cn.afei.mall.framework.apilog.config.MallApiLogRpcAutoConfiguration
+cn.afei.mall.framework.xss.config.MallXssAutoConfiguration
+cn.afei.mall.framework.banner.config.MallBannerAutoConfiguration
+cn.afei.mall.framework.encrypt.config.MallApiEncryptAutoConfiguration

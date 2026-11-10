@@ -1,0 +1,2 @@
+cn.afei.mall.framework.redis.config.MallRedisAutoConfiguration
+cn.afei.mall.framework.redis.config.MallCacheAutoConfiguration

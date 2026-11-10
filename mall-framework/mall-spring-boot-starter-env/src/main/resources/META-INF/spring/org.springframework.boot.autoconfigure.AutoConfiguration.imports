@@ -1,0 +1,2 @@
+cn.afei.mall.framework.env.config.MallEnvWebAutoConfiguration
+cn.afei.mall.framework.env.config.MallEnvRpcAutoConfiguration

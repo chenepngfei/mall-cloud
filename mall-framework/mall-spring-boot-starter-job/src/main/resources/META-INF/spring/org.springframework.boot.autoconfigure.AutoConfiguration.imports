@@ -1,0 +1,2 @@
+cn.afei.mall.framework.quartz.config.MallXxlJobAutoConfiguration
+cn.afei.mall.framework.quartz.config.MallAsyncAutoConfiguration

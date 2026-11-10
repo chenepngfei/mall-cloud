@@ -1,0 +1,4 @@
+cn.afei.mall.framework.idempotent.config.MallIdempotentConfiguration
+cn.afei.mall.framework.lock4j.config.MallLock4jConfiguration
+cn.afei.mall.framework.ratelimiter.config.MallRateLimiterConfiguration
+cn.afei.mall.framework.signature.config.MallApiSignatureAutoConfiguration
