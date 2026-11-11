@@ -2,34 +2,26 @@ package cn.afei.mall.framework.datapermission.core.rule.dept;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.afei.mall.framework.common.biz.system.permission.PermissionCommonApi;
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.common.util.collection.CollectionUtils;
 import cn.afei.mall.framework.common.util.json.JsonUtils;
 import cn.afei.mall.framework.datapermission.core.rule.DataPermissionRule;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.util.MyBatisUtils;
 import cn.afei.mall.framework.security.core.LoginUser;
 import cn.afei.mall.framework.security.core.util.SecurityFrameworkUtils;
 import cn.afei.mall.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
-import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.expression.*;
-import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
-import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
-import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
-import net.sf.jsqlparser.expression.operators.relational.InExpression;
-import net.sf.jsqlparser.expression.operators.relational.ParenthesedExpressionList;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * 基于部门的 {@link DataPermissionRule} 数据权限规则实现
+ * 基于部门的 {@link DataPermissionRule} 数据权限规则实现（JPA 版）
  *
  * 注意，使用 DeptDataPermissionRule 时，需要保证表中有 dept_id 部门编号的字段，可自定义。
  *
@@ -38,7 +30,7 @@ import java.util.Set;
  * 2. 部分情况下，希望该用户还是能看到之前的数据，则有两种方式解决：【需要你改造该 DeptDataPermissionRule 的实现代码】
  *  1）编写洗数据的脚本，将 dept_id 修改成新部门的编号；【建议】
  *      最终过滤条件是 WHERE dept_id = ?
- *  2）洗数据的话，可能涉及的数据量较大，也可以采用 user_id 进行过滤的方式，此时需要获取到 dept_id 对应的所有 user_id 用户编号；
+ *  2）洗数据的话，可能涉及的数据量较大，也可以使用 user_id 进行过滤的方式，此时需要获取到 dept_id 对应的所有 user_id 用户编号；
  *      最终过滤条件是 WHERE user_id IN (?, ?, ? ...)
  *  3）想要保证原 dept_id 和 user_id 都可以看的到，此时使用 dept_id 和 user_id 一起过滤；
  *      最终过滤条件是 WHERE dept_id = ? OR user_id IN (?, ?, ? ...)
@@ -54,39 +46,39 @@ public class DeptDataPermissionRule implements DataPermissionRule {
      */
     protected static final String CONTEXT_KEY = DeptDataPermissionRule.class.getSimpleName();
 
-    private static final String DEPT_COLUMN_NAME = "dept_id";
-    private static final String USER_COLUMN_NAME = "user_id";
+    private static final String DEPT_PROPERTY_NAME = "deptId";
+    private static final String USER_PROPERTY_NAME = "userId";
 
     private final PermissionCommonApi permissionApi;
 
     /**
-     * 基于部门的表字段配置
-     * 一般情况下，每个表的部门编号字段是 dept_id，通过该配置自定义。
+     * 基于部门的实体属性配置
+     * 一般情况下，每个实体的部门编号属性是 deptId，通过该配置自定义。
      *
-     * key：表名
-     * value：字段名
+     * key：实体类
+     * value：属性名
      */
-    private final Map<String, String> deptColumns = new HashMap<>();
+    private final Map<Class<?>, String> deptColumns = new HashMap<>();
     /**
-     * 基于用户的表字段配置
-     * 一般情况下，每个表的部门编号字段是 dept_id，通过该配置自定义。
+     * 基于用户的实体属性配置
+     * 一般情况下，每个实体的用户编号属性是 userId，通过该配置自定义。
      *
-     * key：表名
-     * value：字段名
+     * key：实体类
+     * value：属性名
      */
-    private final Map<String, String> userColumns = new HashMap<>();
+    private final Map<Class<?>, String> userColumns = new HashMap<>();
     /**
-     * 所有表名，是 {@link #deptColumns} 和 {@link #userColumns} 的合集
+     * 所有实体类，是 {@link #deptColumns} 和 {@link #userColumns} 的合集
      */
-    private final Set<String> TABLE_NAMES = new HashSet<>();
+    private final Set<Class<?>> ENTITY_CLASSES = new HashSet<>();
 
     @Override
-    public Set<String> getTableNames() {
-        return TABLE_NAMES;
+    public Set<Class<?>> getEntityClasses() {
+        return ENTITY_CLASSES;
     }
 
     @Override
-    public Expression getExpression(String tableName, Alias tableAlias) {
+    public Predicate getPredicate(Class<?> entityClass, Root<?> root, CriteriaBuilder criteriaBuilder) {
         // 只有有登陆用户的情况下，才进行数据权限的处理
         LoginUser loginUser = SecurityFrameworkUtils.getLoginUser();
         if (loginUser == null) {
@@ -103,9 +95,9 @@ public class DeptDataPermissionRule implements DataPermissionRule {
         if (deptDataPermission == null) {
             deptDataPermission = permissionApi.getDeptDataPermission(loginUser.getId()).getCheckedData();
             if (deptDataPermission == null) {
-                log.error("[getExpression][LoginUser({}) 获取数据权限为 null]", JsonUtils.toJsonString(loginUser));
-                throw new NullPointerException(String.format("LoginUser(%d) Table(%s/%s) 未返回数据权限",
-                        loginUser.getId(), tableName, tableAlias.getName()));
+                log.error("[getPredicate][LoginUser({}) 获取数据权限为 null]", JsonUtils.toJsonString(loginUser));
+                throw new NullPointerException(String.format("LoginUser(%d) 实体(%s) 未返回数据权限",
+                        loginUser.getId(), entityClass.getSimpleName()));
             }
             // 添加到上下文中，避免重复计算
             loginUser.setContext(CONTEXT_KEY, deptDataPermission);
@@ -118,35 +110,33 @@ public class DeptDataPermissionRule implements DataPermissionRule {
 
         // 情况二，即不能查看部门，又不能查看自己，则说明 100% 无权限
         if (CollUtil.isEmpty(deptDataPermission.getDeptIds())
-            && Boolean.FALSE.equals(deptDataPermission.getSelf())) {
-            return new EqualsTo(null, null); // WHERE null = null，可以保证返回的数据为空
+                && Boolean.FALSE.equals(deptDataPermission.getSelf())) {
+            return criteriaBuilder.disjunction(); // 恒为 false，可以保证返回的数据为空
         }
 
         // 情况三，拼接 Dept 和 User 的条件，最后组合
-        Expression deptExpression = buildDeptExpression(tableName,tableAlias, deptDataPermission.getDeptIds());
-        Expression userExpression = buildUserExpression(tableName, tableAlias, deptDataPermission.getSelf(), loginUser.getId());
-        if (deptExpression == null && userExpression == null) {
+        Predicate deptPredicate = buildDeptPredicate(entityClass, root, criteriaBuilder, deptDataPermission.getDeptIds());
+        Predicate userPredicate = buildUserPredicate(entityClass, root, criteriaBuilder, deptDataPermission.getSelf(), loginUser.getId());
+        if (deptPredicate == null && userPredicate == null) {
             // TODO 芋艿：获得不到条件的时候，暂时不抛出异常，而是不返回数据
-            log.warn("[getExpression][LoginUser({}) Table({}/{}) DeptDataPermission({}) 构建的条件为空]",
-                    JsonUtils.toJsonString(loginUser), tableName, tableAlias, JsonUtils.toJsonString(deptDataPermission));
-//            throw new NullPointerException(String.format("LoginUser(%d) Table(%s/%s) 构建的条件为空",
-//                    loginUser.getId(), tableName, tableAlias.getName()));
-            return new EqualsTo(null, null); // WHERE null = null，可以保证返回的数据为空
+            log.warn("[getPredicate][LoginUser({}) 实体({}) DeptDataPermission({}) 构建的条件为空]",
+                    JsonUtils.toJsonString(loginUser), entityClass.getSimpleName(), JsonUtils.toJsonString(deptDataPermission));
+            return criteriaBuilder.disjunction(); // 恒为 false，可以保证返回的数据为空
         }
-        if (deptExpression == null) {
-            return userExpression;
+        if (deptPredicate == null) {
+            return userPredicate;
         }
-        if (userExpression == null) {
-            return deptExpression;
+        if (userPredicate == null) {
+            return deptPredicate;
         }
         // 目前，如果有指定部门 + 可查看自己，采用 OR 条件。即，WHERE (dept_id IN ? OR user_id = ?)
-        return new ParenthesedExpressionList(new OrExpression(deptExpression, userExpression));
+        return criteriaBuilder.or(deptPredicate, userPredicate);
     }
 
-    private Expression buildDeptExpression(String tableName, Alias tableAlias, Set<Long> deptIds) {
+    private Predicate buildDeptPredicate(Class<?> entityClass, Root<?> root, CriteriaBuilder criteriaBuilder, Set<Long> deptIds) {
         // 如果不存在配置，则无需作为条件
-        String columnName = deptColumns.get(tableName);
-        if (StrUtil.isEmpty(columnName)) {
+        String propertyName = deptColumns.get(entityClass);
+        if (propertyName == null) {
             return null;
         }
         // 如果为空，则无条件
@@ -154,52 +144,40 @@ public class DeptDataPermissionRule implements DataPermissionRule {
             return null;
         }
         // 拼接条件
-        return new InExpression(MyBatisUtils.buildColumn(tableName, tableAlias, columnName),
-                // Parenthesis 的目的，是提供 (1,2,3) 的 () 左右括号
-                new ParenthesedExpressionList(new ExpressionList<LongValue>(CollectionUtils.convertList(deptIds, LongValue::new))));
+        return root.get(propertyName).in(deptIds);
     }
 
-    private Expression buildUserExpression(String tableName, Alias tableAlias, Boolean self, Long userId) {
+    private Predicate buildUserPredicate(Class<?> entityClass, Root<?> root, CriteriaBuilder criteriaBuilder, Boolean self, Long userId) {
         // 如果不查看自己，则无需作为条件
         if (Boolean.FALSE.equals(self)) {
             return null;
         }
-        String columnName = userColumns.get(tableName);
-        if (StrUtil.isEmpty(columnName)) {
+        String propertyName = userColumns.get(entityClass);
+        if (propertyName == null) {
             return null;
         }
         // 拼接条件
-        return new EqualsTo(MyBatisUtils.buildColumn(tableName, tableAlias, columnName), new LongValue(userId));
+        return criteriaBuilder.equal(root.get(propertyName), userId);
     }
 
     // ==================== 添加配置 ====================
 
-    public void addDeptColumn(Class<? extends BaseDO> entityClass) {
-        addDeptColumn(entityClass, DEPT_COLUMN_NAME);
+    public void addDeptColumn(Class<?> entityClass) {
+        addDeptColumn(entityClass, DEPT_PROPERTY_NAME);
     }
 
-    public void addDeptColumn(Class<? extends BaseDO> entityClass, String columnName) {
-        String tableName = TableInfoHelper.getTableInfo(entityClass).getTableName();
-        addDeptColumn(tableName, columnName);
+    public void addDeptColumn(Class<?> entityClass, String propertyName) {
+        deptColumns.put(entityClass, propertyName);
+        ENTITY_CLASSES.add(entityClass);
     }
 
-    public void addDeptColumn(String tableName, String columnName) {
-        deptColumns.put(tableName, columnName);
-        TABLE_NAMES.add(tableName);
+    public void addUserColumn(Class<?> entityClass) {
+        addUserColumn(entityClass, USER_PROPERTY_NAME);
     }
 
-    public void addUserColumn(Class<? extends BaseDO> entityClass) {
-        addUserColumn(entityClass, USER_COLUMN_NAME);
-    }
-
-    public void addUserColumn(Class<? extends BaseDO> entityClass, String columnName) {
-        String tableName = TableInfoHelper.getTableInfo(entityClass).getTableName();
-        addUserColumn(tableName, columnName);
-    }
-
-    public void addUserColumn(String tableName, String columnName) {
-        userColumns.put(tableName, columnName);
-        TABLE_NAMES.add(tableName);
+    public void addUserColumn(Class<?> entityClass, String propertyName) {
+        userColumns.put(entityClass, propertyName);
+        ENTITY_CLASSES.add(entityClass);
     }
 
 }

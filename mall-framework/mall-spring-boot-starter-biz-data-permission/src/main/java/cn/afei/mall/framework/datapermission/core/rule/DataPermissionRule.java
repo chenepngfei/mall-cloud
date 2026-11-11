@@ -1,8 +1,8 @@
 package cn.afei.mall.framework.datapermission.core.rule;
 
-import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
-import net.sf.jsqlparser.expression.Alias;
-import net.sf.jsqlparser.expression.Expression;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 import java.util.Set;
 
@@ -10,27 +10,28 @@ import java.util.Set;
  * 数据权限规则接口
  * 通过实现接口，自定义数据规则。例如说，
  *
+ * JPA 版：返回 jakarta Criteria 的 {@link Predicate}，追加到 Repository 的 Specification 查询中，
+ * 替代原 MyBatis Plus 基于 JSqlParser 的 SQL 重写
+ *
  * @author 芋道源码
  */
 public interface DataPermissionRule {
 
     /**
-     * 返回需要生效的表名数组
-     * 为什么需要该方法？Data Permission 数组基于 SQL 重写，通过 Where 返回只有权限的数据
+     * 返回需要生效的实体类数组
      *
-     * 如果需要基于实体名获得表名，可调用 {@link TableInfoHelper#getTableInfo(Class)} 获得
-     *
-     * @return 表名数组
+     * @return 实体类数组
      */
-    Set<String> getTableNames();
+    Set<Class<?>> getEntityClasses();
 
     /**
-     * 根据表名和别名，生成对应的 WHERE / OR 过滤条件
+     * 针对实体生成数据权限的过滤条件
      *
-     * @param tableName 表名
-     * @param tableAlias 别名，可能为空
-     * @return 过滤条件 Expression 表达式
+     * @param entityClass     实体类
+     * @param root            查询根
+     * @param criteriaBuilder 条件构建器
+     * @return 过滤条件；返回 null 表示无需过滤（例如 ALL 权限）
      */
-    Expression getExpression(String tableName, Alias tableAlias);
+    Predicate getPredicate(Class<?> entityClass, Root<?> root, CriteriaBuilder criteriaBuilder);
 
 }

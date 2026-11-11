@@ -30,7 +30,7 @@
         <!-- DB 相关 -->
         <dependency>
             <groupId>cn.afei.cloud</groupId>
-            <artifactId>mall-spring-boot-starter-mybatis</artifactId>
+            <artifactId>mall-spring-boot-starter-jpa</artifactId>
         </dependency>
 
         <dependency>
