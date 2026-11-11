@@ -229,6 +229,11 @@
                 <artifactId>mall-spring-boot-starter-mybatis</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>cn.afei.cloud</groupId>
+                <artifactId>mall-spring-boot-starter-jpa</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.alibaba</groupId>
@@ -285,6 +290,11 @@
             <dependency>
                 <groupId>org.dromara</groupId>
                 <artifactId>easy-trans-mybatis-plus-extend</artifactId>
+                <version>${easy-trans.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dromara</groupId>
+                <artifactId>easy-trans-jpa-sb3-extend</artifactId>
                 <version>${easy-trans.version}</version>
             </dependency>
             <dependency>
