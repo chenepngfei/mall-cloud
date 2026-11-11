@@ -37,7 +37,7 @@ public interface ApiErrorLogRepository extends BaseRepositoryX<ApiErrorLogDO, Lo
      * @return 删除条数
      */
     @Modifying
-    @Query(value = "DELETE FROM infra_api_error_log WHERE create_time < :createTime LIMIT :limit", nativeQuery = true)
+    @Query(value = "DELETE FROM infra_api_error_log WHERE create_time < :createTime AND id IN (SELECT id FROM (SELECT id FROM infra_api_error_log WHERE create_time < :createTime LIMIT :limit) tmp)", nativeQuery = true)
     int deleteByCreateTimeLt(@Param("createTime") LocalDateTime createTime, @Param("limit") Integer limit);
 
 }

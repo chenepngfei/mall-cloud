@@ -20,10 +20,13 @@ public interface MailLogRepository extends BaseRepositoryX<MailLogDO, Long> {
                 .betweenIfPresent(MailLogDO::getSendTime, reqVO.getSendTime())
                 .orderByDesc(MailLogDO::getId)
                 .build();
-        // 等价于原 MyBatis 的 findInSet("to_mails")：FIND_IN_SET(value, to_mails) <> 0
+        // 等价于原 MyBatis 的 findInSet("to_mails")：to_mails 包含该邮箱（逗号分隔列表中的精确元素）
+        // 跨数据库写法：concat(',', to_mails, ',') LIKE '%,mail,%'（MySQL / PostgreSQL 通用）
         if (StrUtil.isNotBlank(reqVO.getToMail())) {
-            spec = spec.and((root, query, cb) -> cb.notEqual(cb.function("FIND_IN_SET", Integer.class,
-                    cb.literal(reqVO.getToMail()), root.get("toMails")), 0));
+            String toMail = reqVO.getToMail();
+            spec = spec.and((root, query, cb) -> cb.like(
+                    cb.concat(cb.concat(cb.literal(","), root.get("toMails")), cb.literal(",")),
+                    "%," + toMail + ",%"));
         }
         return selectPage(reqVO, spec);
     }

@@ -49,7 +49,7 @@ public interface OAuth2AccessTokenRepository extends BaseRepositoryX<OAuth2Acces
      */
     @Transactional
     @Modifying
-    @Query(value = "DELETE FROM system_oauth2_access_token WHERE expires_time < :expiresTime LIMIT :limit",
+    @Query(value = "DELETE FROM system_oauth2_access_token WHERE expires_time < :expiresTime AND id IN (SELECT id FROM (SELECT id FROM system_oauth2_access_token WHERE expires_time < :expiresTime LIMIT :limit) tmp)",
             nativeQuery = true)
     Integer deleteByExpiresTimeLt(@Param("expiresTime") LocalDateTime expiresTime, @Param("limit") Integer limit);
 

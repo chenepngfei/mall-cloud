@@ -55,12 +55,6 @@
             <artifactId>mall-spring-boot-starter-jpa</artifactId>
         </dependency>
 
-        <!-- DB 驱动：PostgreSQL（win/mac profile 使用；starter 中为 optional 不传递，需显式声明） -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>cn.afei.cloud</groupId>
             <artifactId>mall-spring-boot-starter-redis</artifactId>

@@ -32,12 +32,6 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- DB 驱动：PostgreSQL（win/mac profile 使用；starter 中为 optional 不传递，需显式声明） -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-
         <!-- 会员中心。默认注释，保证编译速度 -->
 <!--        <dependency>-->
 <!--            <groupId>cn.afei.cloud</groupId>-->

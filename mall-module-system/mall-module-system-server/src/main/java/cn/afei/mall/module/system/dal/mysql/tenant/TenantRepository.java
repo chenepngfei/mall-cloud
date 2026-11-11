@@ -28,12 +28,13 @@ public interface TenantRepository extends BaseRepositoryX<TenantDO, Long> {
     /**
      * 查询绑定了指定域名的租户列表
      *
-     * 等价于原 MyBatis Plus 的 findInSet 写法：FIND_IN_SET(website, websites) > 0，
-     * websites 字段是以逗号分隔的域名列表
+     * 等价于原 MyBatis Plus 的 findInSet 写法，websites 字段是以逗号分隔的域名列表；
+     * 跨数据库写法：concat(',', websites, ',') LIKE '%,website,%'（MySQL / PostgreSQL 通用）
      */
     default List<TenantDO> selectListByWebsite(String website) {
-        return selectList((root, query, cb) -> cb.greaterThan(
-                cb.function("FIND_IN_SET", Integer.class, cb.literal(website), root.get("websites")), 0));
+        return selectList((root, query, cb) -> cb.like(
+                cb.concat(cb.concat(cb.literal(","), root.get("websites")), cb.literal(",")),
+                "%," + website + ",%"));
     }
 
     default Long selectCountByPackageId(Long packageId) {
