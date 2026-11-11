@@ -1,19 +1,22 @@
 package cn.afei.mall.module.system.dal.dataobject.social;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.module.system.enums.social.SocialTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * 社交（三方）用户
  *
  * @author weir
  */
-@TableName(value = "system_social_user", autoResultMap = true)
-@KeySequence("system_social_user_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_social_user")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -24,7 +27,8 @@ public class SocialUserDO extends BaseDO {
     /**
      * 自增主键
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 社交平台的类型
@@ -69,5 +73,3 @@ public class SocialUserDO extends BaseDO {
     private String state;
 
 }
-
-

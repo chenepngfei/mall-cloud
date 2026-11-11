@@ -8,7 +8,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.mail.vo.template.MailTemplatePageReqVO;
 import cn.afei.mall.module.system.controller.admin.mail.vo.template.MailTemplateSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.mail.MailTemplateDO;
-import cn.afei.mall.module.system.dal.mysql.mail.MailTemplateMapper;
+import cn.afei.mall.module.system.dal.mysql.mail.MailTemplateRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
@@ -46,7 +46,7 @@ public class MailTemplateServiceImpl implements MailTemplateService {
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
     @Resource
-    private MailTemplateMapper mailTemplateMapper;
+    private MailTemplateRepository mailTemplateRepository;
 
     @Override
     public Long createMailTemplate(MailTemplateSaveReqVO createReqVO) {
@@ -56,7 +56,7 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         // 插入
         MailTemplateDO template = BeanUtils.toBean(createReqVO, MailTemplateDO.class)
                 .setParams(parseTemplateTitleAndContentParams(createReqVO.getTitle(), createReqVO.getContent()));
-        mailTemplateMapper.insert(template);
+        mailTemplateRepository.insert(template);
         return template.getId();
     }
 
@@ -72,12 +72,12 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         // 更新
         MailTemplateDO updateObj = BeanUtils.toBean(updateReqVO, MailTemplateDO.class)
                 .setParams(parseTemplateTitleAndContentParams(updateReqVO.getTitle(), updateReqVO.getContent()));
-        mailTemplateMapper.updateById(updateObj);
+        mailTemplateRepository.updateById(updateObj);
     }
 
     @VisibleForTesting
     void validateCodeUnique(Long id, String code) {
-        MailTemplateDO template = mailTemplateMapper.selectByCode(code);
+        MailTemplateDO template = mailTemplateRepository.selectByCode(code);
         if (template == null) {
             return;
         }
@@ -96,46 +96,46 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         validateMailTemplateExists(id);
 
         // 删除
-        mailTemplateMapper.deleteById(id);
+        mailTemplateRepository.deleteById(id);
     }
 
     @Override
     @CacheEvict(cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteMailTemplateList(List<Long> ids) {
-        mailTemplateMapper.deleteByIds(ids);
+        mailTemplateRepository.deleteByIds(ids);
     }
 
     private void validateMailTemplateExists(Long id) {
-        if (mailTemplateMapper.selectById(id) == null) {
+        if (mailTemplateRepository.selectById(id) == null) {
             throw exception(MAIL_TEMPLATE_NOT_EXISTS);
         }
     }
 
     @Override
     public MailTemplateDO getMailTemplate(Long id) {
-        return mailTemplateMapper.selectById(id);
+        return mailTemplateRepository.selectById(id);
     }
 
     @Override
     @Cacheable(value = RedisKeyConstants.MAIL_TEMPLATE, key = "#code", unless = "#result == null")
     public MailTemplateDO getMailTemplateByCodeFromCache(String code) {
-        return mailTemplateMapper.selectByCode(code);
+        return mailTemplateRepository.selectByCode(code);
     }
 
     @Override
     public PageResult<MailTemplateDO> getMailTemplatePage(MailTemplatePageReqVO pageReqVO) {
-        return mailTemplateMapper.selectPage(pageReqVO);
+        return mailTemplateRepository.selectPage(pageReqVO);
     }
 
     @Override
     public List<MailTemplateDO> getMailTemplateList() {
-        return mailTemplateMapper.selectList();
+        return mailTemplateRepository.selectList();
     }
 
     @Override
     public List<MailTemplateDO> getMailTemplateListByStatus(Integer status) {
-        return mailTemplateMapper.selectListByStatus(status);
+        return mailTemplateRepository.selectListByStatus(status);
     }
 
     @Override
@@ -216,7 +216,7 @@ public class MailTemplateServiceImpl implements MailTemplateService {
 
     @Override
     public long getMailTemplateCountByAccountId(Long accountId) {
-        return mailTemplateMapper.selectCountByAccountId(accountId);
+        return mailTemplateRepository.selectCountByAccountId(accountId);
     }
 
     /**

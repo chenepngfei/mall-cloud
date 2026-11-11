@@ -1,0 +1,31 @@
+package cn.afei.mall.module.system.dal.mysql.mail;
+
+import cn.hutool.core.util.StrUtil;
+import cn.afei.mall.framework.common.pojo.PageResult;
+import cn.afei.mall.framework.jpa.core.query.LambdaSpecifications;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
+import cn.afei.mall.module.system.controller.admin.mail.vo.log.MailLogPageReqVO;
+import cn.afei.mall.module.system.dal.dataobject.mail.MailLogDO;
+import org.springframework.data.jpa.domain.Specification;
+
+public interface MailLogRepository extends BaseRepositoryX<MailLogDO, Long> {
+
+    default PageResult<MailLogDO> selectPage(MailLogPageReqVO reqVO) {
+        Specification<MailLogDO> spec = LambdaSpecifications.<MailLogDO>of()
+                .eqIfPresent(MailLogDO::getUserId, reqVO.getUserId())
+                .eqIfPresent(MailLogDO::getUserType, reqVO.getUserType())
+                .eqIfPresent(MailLogDO::getAccountId, reqVO.getAccountId())
+                .eqIfPresent(MailLogDO::getTemplateId, reqVO.getTemplateId())
+                .eqIfPresent(MailLogDO::getSendStatus, reqVO.getSendStatus())
+                .betweenIfPresent(MailLogDO::getSendTime, reqVO.getSendTime())
+                .orderByDesc(MailLogDO::getId)
+                .build();
+        // 等价于原 MyBatis 的 findInSet("to_mails")：FIND_IN_SET(value, to_mails) <> 0
+        if (StrUtil.isNotBlank(reqVO.getToMail())) {
+            spec = spec.and((root, query, cb) -> cb.notEqual(cb.function("FIND_IN_SET", Integer.class,
+                    cb.literal(reqVO.getToMail()), root.get("toMails")), 0));
+        }
+        return selectPage(reqVO, spec);
+    }
+
+}

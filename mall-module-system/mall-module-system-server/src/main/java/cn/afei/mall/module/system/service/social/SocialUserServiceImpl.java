@@ -9,8 +9,8 @@ import cn.afei.mall.module.system.api.social.dto.SocialUserRespDTO;
 import cn.afei.mall.module.system.controller.admin.social.vo.user.SocialUserPageReqVO;
 import cn.afei.mall.module.system.dal.dataobject.social.SocialUserBindDO;
 import cn.afei.mall.module.system.dal.dataobject.social.SocialUserDO;
-import cn.afei.mall.module.system.dal.mysql.social.SocialUserBindMapper;
-import cn.afei.mall.module.system.dal.mysql.social.SocialUserMapper;
+import cn.afei.mall.module.system.dal.mysql.social.SocialUserBindRepository;
+import cn.afei.mall.module.system.dal.mysql.social.SocialUserRepository;
 import cn.afei.mall.module.system.enums.social.SocialTypeEnum;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
@@ -39,9 +39,9 @@ import static cn.afei.mall.module.system.enums.ErrorCodeConstants.SOCIAL_USER_NO
 public class SocialUserServiceImpl implements SocialUserService {
 
     @Resource
-    private SocialUserBindMapper socialUserBindMapper;
+    private SocialUserBindRepository socialUserBindRepository;
     @Resource
-    private SocialUserMapper socialUserMapper;
+    private SocialUserRepository socialUserRepository;
 
     @Resource
     private SocialClientService socialClientService;
@@ -49,12 +49,12 @@ public class SocialUserServiceImpl implements SocialUserService {
     @Override
     public List<SocialUserDO> getSocialUserList(Long userId, Integer userType) {
         // 获得绑定
-        List<SocialUserBindDO> socialUserBinds = socialUserBindMapper.selectListByUserIdAndUserType(userId, userType);
+        List<SocialUserBindDO> socialUserBinds = socialUserBindRepository.selectListByUserIdAndUserType(userId, userType);
         if (CollUtil.isEmpty(socialUserBinds)) {
             return Collections.emptyList();
         }
         // 获得社交用户
-        return socialUserMapper.selectByIds(convertSet(socialUserBinds, SocialUserBindDO::getSocialUserId));
+        return socialUserRepository.selectByIds(convertSet(socialUserBinds, SocialUserBindDO::getSocialUserId));
     }
 
     @Override
@@ -66,41 +66,41 @@ public class SocialUserServiceImpl implements SocialUserService {
         Assert.notNull(socialUser, "社交用户不能为空");
 
         // 社交用户可能之前绑定过别的用户，需要进行解绑
-        socialUserBindMapper.deleteByUserTypeAndSocialUserId(reqDTO.getUserType(), socialUser.getId());
+        socialUserBindRepository.deleteByUserTypeAndSocialUserId(reqDTO.getUserType(), socialUser.getId());
 
         // 用户可能之前已经绑定过该社交类型，需要进行解绑
-        socialUserBindMapper.deleteByUserTypeAndUserIdAndSocialType(reqDTO.getUserType(), reqDTO.getUserId(),
+        socialUserBindRepository.deleteByUserTypeAndUserIdAndSocialType(reqDTO.getUserType(), reqDTO.getUserId(),
                 socialUser.getType());
 
         // 绑定当前登录的社交用户
         SocialUserBindDO socialUserBind = SocialUserBindDO.builder()
                 .userId(reqDTO.getUserId()).userType(reqDTO.getUserType())
                 .socialUserId(socialUser.getId()).socialType(socialUser.getType()).build();
-        socialUserBindMapper.insert(socialUserBind);
+        socialUserBindRepository.insert(socialUserBind);
         return socialUser.getOpenid();
     }
 
     @Override
     public void unbindSocialUser(Long userId, Integer userType, Integer socialType, String openid) {
         // 获得 openid 对应的 SocialUserDO 社交用户
-        SocialUserDO socialUser = socialUserMapper.selectByTypeAndOpenid(socialType, openid);
+        SocialUserDO socialUser = socialUserRepository.selectByTypeAndOpenid(socialType, openid);
         if (socialUser == null) {
             throw exception(SOCIAL_USER_NOT_FOUND);
         }
 
         // 获得对应的社交绑定关系
-        socialUserBindMapper.deleteByUserTypeAndUserIdAndSocialType(userType, userId, socialUser.getType());
+        socialUserBindRepository.deleteByUserTypeAndUserIdAndSocialType(userType, userId, socialUser.getType());
     }
 
     @Override
     public SocialUserRespDTO getSocialUserByUserId(Integer userType, Long userId, Integer socialType) {
         // 获得绑定用户
-        SocialUserBindDO socialUserBind = socialUserBindMapper.selectByUserIdAndUserTypeAndSocialType(userId, userType, socialType);
+        SocialUserBindDO socialUserBind = socialUserBindRepository.selectByUserIdAndUserTypeAndSocialType(userId, userType, socialType);
         if (socialUserBind == null) {
             return null;
         }
         // 获得社交用户
-        SocialUserDO socialUser = socialUserMapper.selectById(socialUserBind.getSocialUserId());
+        SocialUserDO socialUser = socialUserRepository.selectById(socialUserBind.getSocialUserId());
         Assert.notNull(socialUser, "社交用户不能为空");
         return new SocialUserRespDTO(socialUser.getOpenid(), socialUser.getNickname(), socialUser.getAvatar(),
                 socialUserBind.getUserId());
@@ -113,7 +113,7 @@ public class SocialUserServiceImpl implements SocialUserService {
         Assert.notNull(socialUser, "社交用户不能为空");
 
         // 获得绑定用户
-        SocialUserBindDO socialUserBind = socialUserBindMapper.selectByUserTypeAndSocialUserId(userType,
+        SocialUserBindDO socialUserBind = socialUserBindRepository.selectByUserTypeAndSocialUserId(userType,
                 socialUser.getId());
         return new SocialUserRespDTO(socialUser.getOpenid(), socialUser.getNickname(), socialUser.getAvatar(),
                 socialUserBind != null ? socialUserBind.getUserId() : null);
@@ -133,7 +133,7 @@ public class SocialUserServiceImpl implements SocialUserService {
     public SocialUserDO authSocialUser(Integer socialType, Integer userType, String code, String state) {
         // 优先从 DB 中获取，因为 code 有且可以使用一次。
         // 在社交登录时，当未绑定 User 时，需要绑定登录，此时需要 code 使用两次
-        SocialUserDO socialUser = socialUserMapper.selectByTypeAndCodeAnState(socialType, code, state);
+        SocialUserDO socialUser = socialUserRepository.selectByTypeAndCodeAnState(socialType, code, state);
         if (socialUser != null) {
             return socialUser;
         }
@@ -143,7 +143,7 @@ public class SocialUserServiceImpl implements SocialUserService {
         Assert.notNull(authUser, "三方用户不能为空");
 
         // 保存到 DB 中
-        socialUser = socialUserMapper.selectByTypeAndOpenid(socialType, authUser.getUuid());
+        socialUser = socialUserRepository.selectByTypeAndOpenid(socialType, authUser.getUuid());
         if (socialUser == null) {
             socialUser = new SocialUserDO();
         }
@@ -151,10 +151,10 @@ public class SocialUserServiceImpl implements SocialUserService {
                 .setOpenid(authUser.getUuid()).setToken(authUser.getToken().getAccessToken()).setRawTokenInfo((toJsonString(authUser.getToken())))
                 .setNickname(authUser.getNickname()).setAvatar(authUser.getAvatar()).setRawUserInfo(toJsonString(authUser.getRawUserInfo()));
         if (socialUser.getId() == null) {
-            socialUserMapper.insert(socialUser);
+            socialUserRepository.insert(socialUser);
         } else {
             socialUser.clean(); // 避免 updateTime 不更新：https://gitee.com/mallcode/mall-boot-mini/issues/ID7FUL
-            socialUserMapper.updateById(socialUser);
+            socialUserRepository.updateById(socialUser);
         }
         return socialUser;
     }
@@ -163,12 +163,12 @@ public class SocialUserServiceImpl implements SocialUserService {
 
     @Override
     public SocialUserDO getSocialUser(Long id) {
-        return socialUserMapper.selectById(id);
+        return socialUserRepository.selectById(id);
     }
 
     @Override
     public PageResult<SocialUserDO> getSocialUserPage(SocialUserPageReqVO pageReqVO) {
-        return socialUserMapper.selectPage(pageReqVO);
+        return socialUserRepository.selectPage(pageReqVO);
     }
 
 }

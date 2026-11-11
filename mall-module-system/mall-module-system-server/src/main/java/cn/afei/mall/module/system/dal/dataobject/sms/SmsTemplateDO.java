@@ -1,17 +1,20 @@
 package cn.afei.mall.module.system.dal.dataobject.sms;
 
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.convert.StringListConverter;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.system.enums.sms.SmsTemplateTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.List;
 
 /**
@@ -20,8 +23,8 @@ import java.util.List;
  * @author zzf
  * @since 2021-01-25
  */
-@TableName(value = "system_sms_template", autoResultMap = true)
-@KeySequence("system_sms_template_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_sms_template")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -31,6 +34,8 @@ public class SmsTemplateDO extends BaseDO {
     /**
      * 自增编号
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // ========= 模板相关字段 =========
@@ -64,7 +69,7 @@ public class SmsTemplateDO extends BaseDO {
     /**
      * 参数数组(自动根据内容生成)
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = StringListConverter.class)
     private List<String> params;
     /**
      * 备注

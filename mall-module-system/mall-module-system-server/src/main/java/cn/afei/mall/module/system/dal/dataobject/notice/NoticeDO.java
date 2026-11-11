@@ -1,20 +1,24 @@
 package cn.afei.mall.module.system.dal.dataobject.notice;
 
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.module.system.enums.notice.NoticeTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * 通知公告表
  *
  * @author ruoyi
  */
-@TableName("system_notice")
-@KeySequence("system_notice_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_notice")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class NoticeDO extends BaseDO {
@@ -22,6 +26,8 @@ public class NoticeDO extends BaseDO {
     /**
      * 公告ID
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 公告标题

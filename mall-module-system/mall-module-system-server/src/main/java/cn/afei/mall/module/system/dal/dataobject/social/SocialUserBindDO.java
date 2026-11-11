@@ -1,11 +1,14 @@
 package cn.afei.mall.module.system.dal.dataobject.social;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import lombok.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * 社交用户的绑定
@@ -13,8 +16,8 @@ import lombok.*;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_social_user_bind", autoResultMap = true)
-@KeySequence("system_social_user_bind_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_social_user_bind")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -25,7 +28,8 @@ public class SocialUserBindDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 关联的用户编号

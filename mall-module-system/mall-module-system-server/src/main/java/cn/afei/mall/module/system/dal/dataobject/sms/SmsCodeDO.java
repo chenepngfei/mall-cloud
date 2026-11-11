@@ -1,13 +1,16 @@
 package cn.afei.mall.module.system.dal.dataobject.sms;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.type.IntegerBooleanTypeHandler;
+import cn.afei.mall.framework.jpa.core.convert.IntegerBooleanConverter;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 /**
@@ -17,8 +20,8 @@ import java.time.LocalDateTime;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_sms_code", autoResultMap = true)
-@KeySequence("system_sms_code_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_sms_code")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -30,6 +33,8 @@ public class SmsCodeDO extends BaseDO {
     /**
      * 编号
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 手机号
@@ -56,7 +61,7 @@ public class SmsCodeDO extends BaseDO {
     /**
      * 是否使用
      */
-    @TableField(typeHandler = IntegerBooleanTypeHandler.class)
+    @Convert(converter = IntegerBooleanConverter.class)
     private Boolean used;
     /**
      * 使用时间

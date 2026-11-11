@@ -3,11 +3,15 @@ package cn.afei.mall.module.system.dal.dataobject.dept;
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import cn.afei.mall.module.system.dal.dataobject.user.AdminUserDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Filter;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * 部门表
@@ -15,8 +19,9 @@ import lombok.EqualsAndHashCode;
  * @author ruoyi
  * @author 芋道源码
  */
-@TableName("system_dept")
-@KeySequence("system_dept_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_dept")
+@Filter(name = TenantBaseDO.TENANT_FILTER_NAME, condition = "tenant_id = :tenantId")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DeptDO extends TenantBaseDO {
@@ -26,7 +31,8 @@ public class DeptDO extends TenantBaseDO {
     /**
      * 部门ID
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 部门名称

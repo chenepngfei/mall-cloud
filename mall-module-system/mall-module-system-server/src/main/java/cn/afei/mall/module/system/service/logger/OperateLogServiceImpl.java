@@ -6,7 +6,7 @@ import cn.afei.mall.framework.common.biz.system.logger.dto.OperateLogCreateReqDT
 import cn.afei.mall.module.system.api.logger.dto.OperateLogPageReqDTO;
 import cn.afei.mall.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
 import cn.afei.mall.module.system.dal.dataobject.logger.OperateLogDO;
-import cn.afei.mall.module.system.dal.mysql.logger.OperateLogMapper;
+import cn.afei.mall.module.system.dal.mysql.logger.OperateLogRepository;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,27 +23,27 @@ import org.springframework.validation.annotation.Validated;
 public class OperateLogServiceImpl implements OperateLogService {
 
     @Resource
-    private OperateLogMapper operateLogMapper;
+    private OperateLogRepository operateLogRepository;
 
     @Override
     public void createOperateLog(OperateLogCreateReqDTO createReqDTO) {
         OperateLogDO log = BeanUtils.toBean(createReqDTO, OperateLogDO.class);
-        operateLogMapper.insert(log);
+        operateLogRepository.insert(log);
     }
 
     @Override
     public OperateLogDO getOperateLog(Long id) {
-        return operateLogMapper.selectById(id);
+        return operateLogRepository.selectById(id);
     }
 
     @Override
     public PageResult<OperateLogDO> getOperateLogPage(OperateLogPageReqVO pageReqVO) {
-        return operateLogMapper.selectPage(pageReqVO);
+        return operateLogRepository.selectPage(pageReqVO);
     }
 
     @Override
     public PageResult<OperateLogDO> getOperateLogPage(OperateLogPageReqDTO pageReqDTO) {
-        return operateLogMapper.selectPage(pageReqDTO);
+        return operateLogRepository.selectPage(pageReqDTO);
     }
 
 }

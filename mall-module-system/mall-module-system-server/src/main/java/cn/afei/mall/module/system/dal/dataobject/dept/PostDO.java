@@ -1,20 +1,23 @@
 package cn.afei.mall.module.system.dal.dataobject.dept;
 
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * 岗位表
  *
  * @author ruoyi
  */
-@TableName("system_post")
-@KeySequence("system_post_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_post")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PostDO extends BaseDO {
@@ -22,7 +25,8 @@ public class PostDO extends BaseDO {
     /**
      * 岗位序号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 岗位名称

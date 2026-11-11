@@ -9,7 +9,7 @@ import cn.afei.mall.module.system.controller.admin.dict.vo.data.DictDataPageReqV
 import cn.afei.mall.module.system.controller.admin.dict.vo.data.DictDataSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.dict.DictDataDO;
 import cn.afei.mall.module.system.dal.dataobject.dict.DictTypeDO;
-import cn.afei.mall.module.system.dal.mysql.dict.DictDataMapper;
+import cn.afei.mall.module.system.dal.mysql.dict.DictDataRepository;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -43,23 +43,23 @@ public class DictDataServiceImpl implements DictDataService {
     private DictTypeService dictTypeService;
 
     @Resource
-    private DictDataMapper dictDataMapper;
+    private DictDataRepository dictDataRepository;
 
     @Override
     public List<DictDataDO> getDictDataList(Integer status, String dictType) {
-        List<DictDataDO> list = dictDataMapper.selectListByStatusAndDictType(status, dictType);
+        List<DictDataDO> list = dictDataRepository.selectListByStatusAndDictType(status, dictType);
         list.sort(COMPARATOR_TYPE_AND_SORT);
         return list;
     }
 
     @Override
     public PageResult<DictDataDO> getDictDataPage(DictDataPageReqVO pageReqVO) {
-        return dictDataMapper.selectPage(pageReqVO);
+        return dictDataRepository.selectPage(pageReqVO);
     }
 
     @Override
     public DictDataDO getDictData(Long id) {
-        return dictDataMapper.selectById(id);
+        return dictDataRepository.selectById(id);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class DictDataServiceImpl implements DictDataService {
 
         // 插入字典类型
         DictDataDO dictData = BeanUtils.toBean(createReqVO, DictDataDO.class);
-        dictDataMapper.insert(dictData);
+        dictDataRepository.insert(dictData);
         return dictData.getId();
     }
 
@@ -86,7 +86,7 @@ public class DictDataServiceImpl implements DictDataService {
 
         // 更新字典类型
         DictDataDO updateObj = BeanUtils.toBean(updateReqVO, DictDataDO.class);
-        dictDataMapper.updateById(updateObj);
+        dictDataRepository.updateById(updateObj);
     }
 
     @Override
@@ -95,22 +95,22 @@ public class DictDataServiceImpl implements DictDataService {
         validateDictDataExists(id);
 
         // 删除字典数据
-        dictDataMapper.deleteById(id);
+        dictDataRepository.deleteById(id);
     }
 
     @Override
     public void deleteDictDataList(List<Long> ids) {
-        dictDataMapper.deleteByIds(ids);
+        dictDataRepository.deleteByIds(ids);
     }
 
     @Override
     public long getDictDataCountByDictType(String dictType) {
-        return dictDataMapper.selectCountByDictType(dictType);
+        return dictDataRepository.selectCountByDictType(dictType);
     }
 
     @VisibleForTesting
     public void validateDictDataValueUnique(Long id, String dictType, String value) {
-        DictDataDO dictData = dictDataMapper.selectByDictTypeAndValue(dictType, value);
+        DictDataDO dictData = dictDataRepository.selectByDictTypeAndValue(dictType, value);
         if (dictData == null) {
             return;
         }
@@ -128,7 +128,7 @@ public class DictDataServiceImpl implements DictDataService {
         if (id == null) {
             return;
         }
-        DictDataDO dictData = dictDataMapper.selectById(id);
+        DictDataDO dictData = dictDataRepository.selectById(id);
         if (dictData == null) {
             throw exception(DICT_DATA_NOT_EXISTS);
         }
@@ -151,7 +151,7 @@ public class DictDataServiceImpl implements DictDataService {
             return;
         }
         Map<String, DictDataDO> dictDataMap = CollectionUtils.convertMap(
-                dictDataMapper.selectByDictTypeAndValues(dictType, values), DictDataDO::getValue);
+                dictDataRepository.selectByDictTypeAndValues(dictType, values), DictDataDO::getValue);
         // 校验
         values.forEach(value -> {
             DictDataDO dictData = dictDataMap.get(value);
@@ -166,17 +166,17 @@ public class DictDataServiceImpl implements DictDataService {
 
     @Override
     public DictDataDO getDictData(String dictType, String value) {
-        return dictDataMapper.selectByDictTypeAndValue(dictType, value);
+        return dictDataRepository.selectByDictTypeAndValue(dictType, value);
     }
 
     @Override
     public DictDataDO parseDictData(String dictType, String label) {
-        return dictDataMapper.selectByDictTypeAndLabel(dictType, label);
+        return dictDataRepository.selectByDictTypeAndLabel(dictType, label);
     }
 
     @Override
     public List<DictDataDO> getDictDataListByDictType(String dictType) {
-        List<DictDataDO> list = dictDataMapper.selectList(DictDataDO::getDictType, dictType);
+        List<DictDataDO> list = dictDataRepository.selectList(DictDataDO::getDictType, dictType);
         list.sort(Comparator.comparing(DictDataDO::getSort));
         return list;
     }

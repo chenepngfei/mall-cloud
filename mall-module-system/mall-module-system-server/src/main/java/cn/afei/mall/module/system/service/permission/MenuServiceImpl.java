@@ -8,7 +8,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.permission.vo.menu.MenuListReqVO;
 import cn.afei.mall.module.system.controller.admin.permission.vo.menu.MenuSaveVO;
 import cn.afei.mall.module.system.dal.dataobject.permission.MenuDO;
-import cn.afei.mall.module.system.dal.mysql.permission.MenuMapper;
+import cn.afei.mall.module.system.dal.mysql.permission.MenuRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import cn.afei.mall.module.system.enums.permission.MenuTypeEnum;
 import cn.afei.mall.module.system.service.tenant.TenantService;
@@ -40,7 +40,7 @@ import static cn.afei.mall.module.system.enums.ErrorCodeConstants.*;
 public class MenuServiceImpl implements MenuService {
 
     @Resource
-    private MenuMapper menuMapper;
+    private MenuRepository menuRepository;
     @Resource
     private PermissionService permissionService;
     @Resource
@@ -60,7 +60,7 @@ public class MenuServiceImpl implements MenuService {
         // 插入数据库
         MenuDO menu = BeanUtils.toBean(createReqVO, MenuDO.class);
         initMenuProperty(menu);
-        menuMapper.insert(menu);
+        menuRepository.insert(menu);
         // 返回
         return menu.getId();
     }
@@ -70,7 +70,7 @@ public class MenuServiceImpl implements MenuService {
             allEntries = true) // allEntries 清空所有缓存，因为 permission 如果变更，涉及到新老两个 permission。直接清理，简单有效
     public void updateMenu(MenuSaveVO updateReqVO) {
         // 校验更新的菜单是否存在
-        if (menuMapper.selectById(updateReqVO.getId()) == null) {
+        if (menuRepository.selectById(updateReqVO.getId()) == null) {
             throw exception(MENU_NOT_EXISTS);
         }
         // 校验父菜单存在
@@ -82,7 +82,7 @@ public class MenuServiceImpl implements MenuService {
         // 更新到数据库
         MenuDO updateObj = BeanUtils.toBean(updateReqVO, MenuDO.class);
         initMenuProperty(updateObj);
-        menuMapper.updateById(updateObj);
+        menuRepository.updateById(updateObj);
     }
 
     @Override
@@ -91,15 +91,15 @@ public class MenuServiceImpl implements MenuService {
             allEntries = true) // allEntries 清空所有缓存，因为此时不知道 id 对应的 permission 是多少。直接清理，简单有效
     public void deleteMenu(Long id) {
         // 校验是否还有子菜单
-        if (menuMapper.selectCountByParentId(id) > 0) {
+        if (menuRepository.selectCountByParentId(id) > 0) {
             throw exception(MENU_EXISTS_CHILDREN);
         }
         // 校验删除的菜单是否存在
-        if (menuMapper.selectById(id) == null) {
+        if (menuRepository.selectById(id) == null) {
             throw exception(MENU_NOT_EXISTS);
         }
         // 标记删除
-        menuMapper.deleteById(id);
+        menuRepository.deleteById(id);
         // 删除授予给角色的权限
         permissionService.processMenuDeleted(id);
     }
@@ -111,20 +111,20 @@ public class MenuServiceImpl implements MenuService {
     public void deleteMenuList(List<Long> ids) {
         // 校验是否还有子菜单
         ids.forEach(id -> {
-            if (menuMapper.selectCountByParentId(id) > 0) {
+            if (menuRepository.selectCountByParentId(id) > 0) {
                 throw exception(MENU_EXISTS_CHILDREN);
             }
         });
 
         // 标记删除
-        menuMapper.deleteByIds(ids);
+        menuRepository.deleteByIds(ids);
         // 删除授予给角色的权限
         ids.forEach(id -> permissionService.processMenuDeleted(id));
     }
 
     @Override
     public List<MenuDO> getMenuList() {
-        return menuMapper.selectList();
+        return menuRepository.selectList();
     }
 
     @Override
@@ -184,19 +184,19 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public List<MenuDO> getMenuList(MenuListReqVO reqVO) {
-        return menuMapper.selectList(reqVO);
+        return menuRepository.selectList(reqVO);
     }
 
     @Override
     @Cacheable(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#permission")
     public List<Long> getMenuIdListByPermissionFromCache(String permission) {
-        List<MenuDO> menus = menuMapper.selectListByPermission(permission);
+        List<MenuDO> menus = menuRepository.selectListByPermission(permission);
         return convertList(menus, MenuDO::getId);
     }
 
     @Override
     public MenuDO getMenu(Long id) {
-        return menuMapper.selectById(id);
+        return menuRepository.selectById(id);
     }
 
     @Override
@@ -208,7 +208,7 @@ public class MenuServiceImpl implements MenuService {
         // 分批查询，避免 Oracle 等数据库 IN 超过 1000 个时报错（ORA-01795），例如说超级管理员拥有全部菜单。相关案例：https://t.zsxq.com/tbf3q
         // 先去重，避免同一编号落在不同批次后被重复返回
         List<MenuDO> menus = new ArrayList<>(ids.size());
-        CollUtil.split(new LinkedHashSet<>(ids), 1000).forEach(batchIds -> menus.addAll(menuMapper.selectByIds(batchIds)));
+        CollUtil.split(new LinkedHashSet<>(ids), 1000).forEach(batchIds -> menus.addAll(menuRepository.selectByIds(batchIds)));
         return menus;
     }
 
@@ -231,7 +231,7 @@ public class MenuServiceImpl implements MenuService {
         if (parentId.equals(childId)) {
             throw exception(MENU_PARENT_ERROR);
         }
-        MenuDO menu = menuMapper.selectById(parentId);
+        MenuDO menu = menuRepository.selectById(parentId);
         // 父菜单不存在
         if (menu == null) {
             throw exception(MENU_PARENT_NOT_EXISTS);
@@ -254,7 +254,7 @@ public class MenuServiceImpl implements MenuService {
      */
     @VisibleForTesting
     void validateMenuName(Long parentId, String name, Long id) {
-        MenuDO menu = menuMapper.selectByParentIdAndName(parentId, name);
+        MenuDO menu = menuRepository.selectByParentIdAndName(parentId, name);
         if (menu == null) {
             return;
         }
@@ -278,7 +278,7 @@ public class MenuServiceImpl implements MenuService {
         if (StrUtil.isBlank(componentName)) {
             return;
         }
-        MenuDO menu = menuMapper.selectByComponentName(componentName);
+        MenuDO menu = menuRepository.selectByComponentName(componentName);
         if (menu == null) {
             return;
         }

@@ -1,16 +1,19 @@
 package cn.afei.mall.module.system.dal.dataobject.sms;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
+import cn.afei.mall.module.system.dal.convert.ObjectMapConverter;
 import cn.afei.mall.module.system.enums.sms.SmsReceiveStatusEnum;
 import cn.afei.mall.module.system.enums.sms.SmsSendStatusEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.*;
 
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -20,8 +23,8 @@ import java.util.Map;
  * @author zzf
  * @since 2021-01-25
  */
-@TableName(value = "system_sms_log", autoResultMap = true)
-@KeySequence("system_sms_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_sms_log")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -34,6 +37,8 @@ public class SmsLogDO extends BaseDO {
     /**
      * 自增编号
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // ========= 渠道相关字段 =========
@@ -78,7 +83,7 @@ public class SmsLogDO extends BaseDO {
     /**
      * 基于 {@link SmsTemplateDO#getParams()} 输入后的参数
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = ObjectMapConverter.class)
     private Map<String, Object> templateParams;
     /**
      * 短信 API 的模板编号

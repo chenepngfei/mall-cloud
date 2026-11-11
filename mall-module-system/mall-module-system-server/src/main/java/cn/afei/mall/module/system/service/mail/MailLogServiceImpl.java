@@ -6,7 +6,7 @@ import cn.afei.mall.module.system.controller.admin.mail.vo.log.MailLogPageReqVO;
 import cn.afei.mall.module.system.dal.dataobject.mail.MailAccountDO;
 import cn.afei.mall.module.system.dal.dataobject.mail.MailLogDO;
 import cn.afei.mall.module.system.dal.dataobject.mail.MailTemplateDO;
-import cn.afei.mall.module.system.dal.mysql.mail.MailLogMapper;
+import cn.afei.mall.module.system.dal.mysql.mail.MailLogRepository;
 import cn.afei.mall.module.system.enums.mail.MailSendStatusEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -28,16 +28,16 @@ import static cn.hutool.core.exceptions.ExceptionUtil.getRootCauseMessage;
 public class MailLogServiceImpl implements MailLogService {
 
     @Resource
-    private MailLogMapper mailLogMapper;
+    private MailLogRepository mailLogRepository;
 
     @Override
     public PageResult<MailLogDO> getMailLogPage(MailLogPageReqVO pageVO) {
-        return mailLogMapper.selectPage(pageVO);
+        return mailLogRepository.selectPage(pageVO);
     }
 
     @Override
     public MailLogDO getMailLog(Long id) {
-        return mailLogMapper.selectById(id);
+        return mailLogRepository.selectById(id);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class MailLogServiceImpl implements MailLogService {
 
         // 插入数据库
         MailLogDO logDO = logDOBuilder.build();
-        mailLogMapper.insert(logDO);
+        mailLogRepository.insert(logDO);
         return logDO.getId();
     }
 
@@ -67,12 +67,12 @@ public class MailLogServiceImpl implements MailLogService {
     public void updateMailSendResult(Long logId, String messageId, Exception exception) {
         // 1. 成功
         if (exception == null) {
-            mailLogMapper.updateById(new MailLogDO().setId(logId).setSendTime(LocalDateTime.now())
+            mailLogRepository.updateById(new MailLogDO().setId(logId).setSendTime(LocalDateTime.now())
                     .setSendStatus(MailSendStatusEnum.SUCCESS.getStatus()).setSendMessageId(messageId));
             return;
         }
         // 2. 失败
-        mailLogMapper.updateById(new MailLogDO().setId(logId).setSendTime(LocalDateTime.now())
+        mailLogRepository.updateById(new MailLogDO().setId(logId).setSendTime(LocalDateTime.now())
                 .setSendStatus(MailSendStatusEnum.FAILURE.getStatus()).setSendException(getRootCauseMessage(exception)));
 
     }

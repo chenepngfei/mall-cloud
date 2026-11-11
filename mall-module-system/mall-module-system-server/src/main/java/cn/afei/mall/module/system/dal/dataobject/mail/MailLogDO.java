@@ -1,16 +1,19 @@
 package cn.afei.mall.module.system.dal.dataobject.mail;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.type.StringListTypeHandler;
+import cn.afei.mall.framework.jpa.core.convert.StringListConverter;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
+import cn.afei.mall.module.system.dal.convert.ObjectMapConverter;
 import cn.afei.mall.module.system.enums.mail.MailSendStatusEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.*;
 
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,8 +26,8 @@ import java.util.Map;
  * @author wangjingyi
  * @since 2022-03-21
  */
-@TableName(value = "system_mail_log", autoResultMap = true)
-@KeySequence("system_mail_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_mail_log")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -37,6 +40,8 @@ public class MailLogDO extends BaseDO implements Serializable {
     /**
      * 日志编号，自增
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
@@ -53,17 +58,17 @@ public class MailLogDO extends BaseDO implements Serializable {
     /**
      * 接收邮箱地址
      */
-    @TableField(typeHandler = StringListTypeHandler.class)
+    @Convert(converter = StringListConverter.class)
     private List<String> toMails;
     /**
      * 接收邮箱地址
      */
-    @TableField(typeHandler = StringListTypeHandler.class)
+    @Convert(converter = StringListConverter.class)
     private List<String> ccMails;
     /**
      * 密送邮箱地址
      */
-    @TableField(typeHandler = StringListTypeHandler.class)
+    @Convert(converter = StringListConverter.class)
     private List<String> bccMails;
 
     /**
@@ -113,7 +118,7 @@ public class MailLogDO extends BaseDO implements Serializable {
      *
      * 基于 {@link MailTemplateDO#getParams()} 输入后的参数
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = ObjectMapConverter.class)
     private Map<String, Object> templateParams;
 
     // ========= 发送相关字段 =========

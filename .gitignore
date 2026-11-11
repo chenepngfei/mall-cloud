@@ -53,3 +53,4 @@ application-my.yaml
 /mall-ui-app/unpackage/
 .DS_Store
 **/.DS_Store
+.claude/settings.local.json

@@ -5,7 +5,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.notice.vo.NoticePageReqVO;
 import cn.afei.mall.module.system.controller.admin.notice.vo.NoticeSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.notice.NoticeDO;
-import cn.afei.mall.module.system.dal.mysql.notice.NoticeMapper;
+import cn.afei.mall.module.system.dal.mysql.notice.NoticeRepository;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -24,12 +24,12 @@ import static cn.afei.mall.module.system.enums.ErrorCodeConstants.NOTICE_NOT_FOU
 public class NoticeServiceImpl implements NoticeService {
 
     @Resource
-    private NoticeMapper noticeMapper;
+    private NoticeRepository noticeRepository;
 
     @Override
     public Long createNotice(NoticeSaveReqVO createReqVO) {
         NoticeDO notice = BeanUtils.toBean(createReqVO, NoticeDO.class);
-        noticeMapper.insert(notice);
+        noticeRepository.insert(notice);
         return notice.getId();
     }
 
@@ -39,7 +39,7 @@ public class NoticeServiceImpl implements NoticeService {
         validateNoticeExists(updateReqVO.getId());
         // 更新通知公告
         NoticeDO updateObj = BeanUtils.toBean(updateReqVO, NoticeDO.class);
-        noticeMapper.updateById(updateObj);
+        noticeRepository.updateById(updateObj);
     }
 
     @Override
@@ -47,22 +47,22 @@ public class NoticeServiceImpl implements NoticeService {
         // 校验是否存在
         validateNoticeExists(id);
         // 删除通知公告
-        noticeMapper.deleteById(id);
+        noticeRepository.deleteById(id);
     }
 
     @Override
     public void deleteNoticeList(List<Long> ids) {
-        noticeMapper.deleteByIds(ids);
+        noticeRepository.deleteByIds(ids);
     }
 
     @Override
     public PageResult<NoticeDO> getNoticePage(NoticePageReqVO reqVO) {
-        return noticeMapper.selectPage(reqVO);
+        return noticeRepository.selectPage(reqVO);
     }
 
     @Override
     public NoticeDO getNotice(Long id) {
-        return noticeMapper.selectById(id);
+        return noticeRepository.selectById(id);
     }
 
     @VisibleForTesting
@@ -70,7 +70,7 @@ public class NoticeServiceImpl implements NoticeService {
         if (id == null) {
             return;
         }
-        NoticeDO notice = noticeMapper.selectById(id);
+        NoticeDO notice = noticeRepository.selectById(id);
         if (notice == null) {
             throw exception(NOTICE_NOT_FOUND);
         }

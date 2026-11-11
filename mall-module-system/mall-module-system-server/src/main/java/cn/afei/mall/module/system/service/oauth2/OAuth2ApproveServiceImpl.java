@@ -5,7 +5,7 @@ import cn.hutool.core.lang.Assert;
 import cn.afei.mall.framework.common.util.date.DateUtils;
 import cn.afei.mall.module.system.dal.dataobject.oauth2.OAuth2ApproveDO;
 import cn.afei.mall.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
-import cn.afei.mall.module.system.dal.mysql.oauth2.OAuth2ApproveMapper;
+import cn.afei.mall.module.system.dal.mysql.oauth2.OAuth2ApproveRepository;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class OAuth2ApproveServiceImpl implements OAuth2ApproveService {
     private OAuth2ClientService oauth2ClientService;
 
     @Resource
-    private OAuth2ApproveMapper oauth2ApproveMapper;
+    private OAuth2ApproveRepository oauth2ApproveRepository;
 
     @Override
     @Transactional
@@ -84,7 +84,7 @@ public class OAuth2ApproveServiceImpl implements OAuth2ApproveService {
 
     @Override
     public List<OAuth2ApproveDO> getApproveList(Long userId, Integer userType, String clientId) {
-        List<OAuth2ApproveDO> approveDOs = oauth2ApproveMapper.selectListByUserIdAndUserTypeAndClientId(
+        List<OAuth2ApproveDO> approveDOs = oauth2ApproveRepository.selectListByUserIdAndUserTypeAndClientId(
                 userId, userType, clientId);
         approveDOs.removeIf(o -> DateUtils.isExpired(o.getExpiresTime()));
         return approveDOs;
@@ -96,11 +96,11 @@ public class OAuth2ApproveServiceImpl implements OAuth2ApproveService {
         // 先更新
         OAuth2ApproveDO approveDO = new OAuth2ApproveDO().setUserId(userId).setUserType(userType)
                 .setClientId(clientId).setScope(scope).setApproved(approved).setExpiresTime(expireTime);
-        if (oauth2ApproveMapper.update(approveDO) == 1) {
+        if (oauth2ApproveRepository.update(approveDO) == 1) {
             return;
         }
         // 失败，则说明不存在，进行更新
-        oauth2ApproveMapper.insert(approveDO);
+        oauth2ApproveRepository.insert(approveDO);
     }
 
 }

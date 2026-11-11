@@ -1,16 +1,19 @@
 package cn.afei.mall.module.system.dal.dataobject.user;
 
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
+import cn.afei.mall.framework.jpa.core.convert.LongSetConverter;
 import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import cn.afei.mall.module.system.enums.common.SexEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -19,8 +22,9 @@ import java.util.Set;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_users", autoResultMap = true) // 由于 SQL Server 的 system_user 是关键字，所以使用 system_users
-@KeySequence("system_users_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_users") // 由于 SQL Server 的 system_user 是关键字，所以使用 system_users
+@Filter(name = TenantBaseDO.TENANT_FILTER_NAME, condition = "tenant_id = :tenantId")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -31,7 +35,8 @@ public class AdminUserDO extends TenantBaseDO {
     /**
      * 用户ID
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 用户账号
@@ -58,7 +63,7 @@ public class AdminUserDO extends TenantBaseDO {
     /**
      * 岗位编号数组
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = LongSetConverter.class)
     private Set<Long> postIds;
     /**
      * 用户邮箱

@@ -5,7 +5,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.api.logger.dto.LoginLogCreateReqDTO;
 import cn.afei.mall.module.system.controller.admin.logger.vo.loginlog.LoginLogPageReqVO;
 import cn.afei.mall.module.system.dal.dataobject.logger.LoginLogDO;
-import cn.afei.mall.module.system.dal.mysql.logger.LoginLogMapper;
+import cn.afei.mall.module.system.dal.mysql.logger.LoginLogRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -19,22 +19,22 @@ import jakarta.annotation.Resource;
 public class LoginLogServiceImpl implements LoginLogService {
 
     @Resource
-    private LoginLogMapper loginLogMapper;
+    private LoginLogRepository loginLogRepository;
 
     @Override
     public LoginLogDO getLoginLog(Long id) {
-        return loginLogMapper.selectById(id);
+        return loginLogRepository.selectById(id);
     }
 
     @Override
     public PageResult<LoginLogDO> getLoginLogPage(LoginLogPageReqVO pageReqVO) {
-        return loginLogMapper.selectPage(pageReqVO);
+        return loginLogRepository.selectPage(pageReqVO);
     }
 
     @Override
     public void createLoginLog(LoginLogCreateReqDTO reqDTO) {
         LoginLogDO loginLog = BeanUtils.toBean(reqDTO, LoginLogDO.class);
-        loginLogMapper.insert(loginLog);
+        loginLogRepository.insert(loginLog);
     }
 
 }

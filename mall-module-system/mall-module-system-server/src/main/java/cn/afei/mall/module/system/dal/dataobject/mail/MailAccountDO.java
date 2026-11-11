@@ -1,12 +1,15 @@
 package cn.afei.mall.module.system.dal.dataobject.mail;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * 邮箱账号 DO
@@ -16,8 +19,8 @@ import lombok.EqualsAndHashCode;
  * @author wangjingyi
  * @since 2022-03-21
  */
-@TableName(value = "system_mail_account", autoResultMap = true)
-@KeySequence("system_mail_account_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_mail_account")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TenantIgnore
@@ -26,7 +29,8 @@ public class MailAccountDO extends BaseDO {
     /**
      * 主键
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 邮箱

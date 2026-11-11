@@ -5,7 +5,7 @@ import cn.afei.mall.module.system.controller.admin.notify.vo.message.NotifyMessa
 import cn.afei.mall.module.system.controller.admin.notify.vo.message.NotifyMessagePageReqVO;
 import cn.afei.mall.module.system.dal.dataobject.notify.NotifyMessageDO;
 import cn.afei.mall.module.system.dal.dataobject.notify.NotifyTemplateDO;
-import cn.afei.mall.module.system.dal.mysql.notify.NotifyMessageMapper;
+import cn.afei.mall.module.system.dal.mysql.notify.NotifyMessageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -24,7 +24,7 @@ import java.util.Map;
 public class NotifyMessageServiceImpl implements NotifyMessageService {
 
     @Resource
-    private NotifyMessageMapper notifyMessageMapper;
+    private NotifyMessageRepository notifyMessageRepository;
 
     @Override
     public Long createNotifyMessage(Long userId, Integer userType,
@@ -33,43 +33,43 @@ public class NotifyMessageServiceImpl implements NotifyMessageService {
                 .setTemplateId(template.getId()).setTemplateCode(template.getCode())
                 .setTemplateType(template.getType()).setTemplateNickname(template.getNickname())
                 .setTemplateContent(templateContent).setTemplateParams(templateParams).setReadStatus(false);
-        notifyMessageMapper.insert(message);
+        notifyMessageRepository.insert(message);
         return message.getId();
     }
 
     @Override
     public PageResult<NotifyMessageDO> getNotifyMessagePage(NotifyMessagePageReqVO pageReqVO) {
-        return notifyMessageMapper.selectPage(pageReqVO);
+        return notifyMessageRepository.selectPage(pageReqVO);
     }
 
     @Override
     public PageResult<NotifyMessageDO> getMyMyNotifyMessagePage(NotifyMessageMyPageReqVO pageReqVO, Long userId, Integer userType) {
-        return notifyMessageMapper.selectPage(pageReqVO, userId, userType);
+        return notifyMessageRepository.selectPage(pageReqVO, userId, userType);
     }
 
     @Override
     public NotifyMessageDO getNotifyMessage(Long id) {
-        return notifyMessageMapper.selectById(id);
+        return notifyMessageRepository.selectById(id);
     }
 
     @Override
     public List<NotifyMessageDO> getUnreadNotifyMessageList(Long userId, Integer userType, Integer size) {
-        return notifyMessageMapper.selectUnreadListByUserIdAndUserType(userId, userType, size);
+        return notifyMessageRepository.selectUnreadListByUserIdAndUserType(userId, userType, size);
     }
 
     @Override
     public Long getUnreadNotifyMessageCount(Long userId, Integer userType) {
-        return notifyMessageMapper.selectUnreadCountByUserIdAndUserType(userId, userType);
+        return notifyMessageRepository.selectUnreadCountByUserIdAndUserType(userId, userType);
     }
 
     @Override
     public int updateNotifyMessageRead(Collection<Long> ids, Long userId, Integer userType) {
-        return notifyMessageMapper.updateListRead(ids, userId, userType);
+        return notifyMessageRepository.updateListRead(ids, userId, userType);
     }
 
     @Override
     public int updateAllNotifyMessageRead(Long userId, Integer userType) {
-        return notifyMessageMapper.updateListRead(userId, userType);
+        return notifyMessageRepository.updateListRead(userId, userType);
     }
 
 }

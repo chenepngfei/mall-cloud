@@ -26,8 +26,8 @@ import cn.afei.mall.module.system.dal.dataobject.dept.DeptDO;
 import cn.afei.mall.module.system.dal.dataobject.dept.UserPostDO;
 import cn.afei.mall.module.system.dal.dataobject.permission.RoleDO;
 import cn.afei.mall.module.system.dal.dataobject.user.AdminUserDO;
-import cn.afei.mall.module.system.dal.mysql.dept.UserPostMapper;
-import cn.afei.mall.module.system.dal.mysql.user.AdminUserMapper;
+import cn.afei.mall.module.system.dal.mysql.dept.UserPostRepository;
+import cn.afei.mall.module.system.dal.mysql.user.AdminUserRepository;
 import cn.afei.mall.module.system.enums.permission.RoleCodeEnum;
 import cn.afei.mall.module.system.mq.producer.user.AdminUserProducer;
 import cn.afei.mall.module.system.service.dept.DeptService;
@@ -71,7 +71,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     static final String USER_REGISTER_ENABLED_KEY = "system.user.register-enabled";
 
     @Resource
-    private AdminUserMapper userMapper;
+    private AdminUserRepository userRepository;
 
     @Resource
     private DeptService deptService;
@@ -91,7 +91,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private OAuth2TokenService oauth2TokenService;
 
     @Resource
-    private UserPostMapper userPostMapper;
+    private UserPostRepository userPostRepository;
 
     @Resource
     private ConfigApi configApi;
@@ -106,7 +106,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     public Long createUser(UserSaveReqVO createReqVO) {
         // 1.1 校验账户配合
         tenantService.handleTenantInfo(tenant -> {
-            long count = userMapper.selectCount();
+            long count = userRepository.selectCount();
             if (count >= tenant.getAccountCount()) {
                 throw exception(USER_COUNT_MAX, tenant.getAccountCount());
             }
@@ -118,10 +118,10 @@ public class AdminUserServiceImpl implements AdminUserService {
         AdminUserDO user = BeanUtils.toBean(createReqVO, AdminUserDO.class);
         user.setStatus(CommonStatusEnum.ENABLE.getStatus()); // 默认开启
         user.setPassword(encodePassword(createReqVO.getPassword())); // 加密密码
-        userMapper.insert(user);
+        userRepository.insert(user);
         // 2.2 插入关联岗位
         if (CollectionUtil.isNotEmpty(user.getPostIds())) {
-            userPostMapper.insertBatch(convertList(user.getPostIds(),
+            userPostRepository.insertBatch(convertList(user.getPostIds(),
                     postId -> new UserPostDO().setUserId(user.getId()).setPostId(postId)));
         }
 
@@ -138,7 +138,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
         // 1.2 校验账户配合
         tenantService.handleTenantInfo(tenant -> {
-            long count = userMapper.selectCount();
+            long count = userRepository.selectCount();
             if (count >= tenant.getAccountCount()) {
                 throw exception(USER_COUNT_MAX, tenant.getAccountCount());
             }
@@ -150,7 +150,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         AdminUserDO user = BeanUtils.toBean(registerReqVO, AdminUserDO.class);
         user.setStatus(CommonStatusEnum.ENABLE.getStatus()); // 默认开启
         user.setPassword(encodePassword(registerReqVO.getPassword())); // 加密密码
-        userMapper.insert(user);
+        userRepository.insert(user);
         return user;
     }
 
@@ -166,7 +166,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         // 2.1 更新用户
         AdminUserDO updateObj = BeanUtils.toBean(updateReqVO, AdminUserDO.class);
-        userMapper.updateById(updateObj);
+        userRepository.updateById(updateObj);
         // 2.2 更新岗位
         updateUserPost(updateReqVO, updateObj);
         // 2.3 昵称 / 头像变化时，发送消息供下游订阅（如 IM 模块推 FRIEND_INFO_UPDATED）
@@ -179,24 +179,24 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private void updateUserPost(UserSaveReqVO reqVO, AdminUserDO updateObj) {
         Long userId = reqVO.getId();
-        Set<Long> dbPostIds = convertSet(userPostMapper.selectListByUserId(userId), UserPostDO::getPostId);
+        Set<Long> dbPostIds = convertSet(userPostRepository.selectListByUserId(userId), UserPostDO::getPostId);
         // 计算新增和删除的岗位编号
         Set<Long> postIds = CollUtil.emptyIfNull(updateObj.getPostIds());
         Collection<Long> createPostIds = CollUtil.subtract(postIds, dbPostIds);
         Collection<Long> deletePostIds = CollUtil.subtract(dbPostIds, postIds);
         // 执行新增和删除。对于已经授权的岗位，不用做任何处理
         if (!CollectionUtil.isEmpty(createPostIds)) {
-            userPostMapper.insertBatch(convertList(createPostIds,
+            userPostRepository.insertBatch(convertList(createPostIds,
                     postId -> new UserPostDO().setUserId(userId).setPostId(postId)));
         }
         if (!CollectionUtil.isEmpty(deletePostIds)) {
-            userPostMapper.deleteByUserIdAndPostId(userId, deletePostIds);
+            userPostRepository.deleteByUserIdAndPostId(userId, deletePostIds);
         }
     }
 
     @Override
     public void updateUserLogin(Long id, String loginIp) {
-        userMapper.updateById(new AdminUserDO().setId(id).setLoginIp(loginIp).setLoginDate(LocalDateTime.now()));
+        userRepository.updateById(new AdminUserDO().setId(id).setLoginIp(loginIp).setLoginDate(LocalDateTime.now()));
     }
 
     @Override
@@ -207,7 +207,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         validateMobileUnique(id, reqVO.getMobile());
 
         // 2. 执行更新
-        userMapper.updateById(BeanUtils.toBean(reqVO, AdminUserDO.class).setId(id));
+        userRepository.updateById(BeanUtils.toBean(reqVO, AdminUserDO.class).setId(id));
 
         // 3. 昵称 / 头像变化时，发送消息供下游订阅（如 IM 模块推 FRIEND_INFO_UPDATED）
         publishUserProfileUpdatedIfChanged(oldUser, reqVO.getNickname(), reqVO.getAvatar());
@@ -234,7 +234,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         // 执行更新
         AdminUserDO updateObj = new AdminUserDO().setId(id);
         updateObj.setPassword(encodePassword(reqVO.getNewPassword())); // 加密密码
-        userMapper.updateById(updateObj);
+        userRepository.updateById(updateObj);
     }
 
     @Override
@@ -248,7 +248,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         AdminUserDO updateObj = new AdminUserDO();
         updateObj.setId(id);
         updateObj.setPassword(encodePassword(password)); // 加密密码
-        userMapper.updateById(updateObj);
+        userRepository.updateById(updateObj);
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("user", user);
@@ -268,7 +268,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         AdminUserDO updateObj = new AdminUserDO();
         updateObj.setId(id);
         updateObj.setStatus(status);
-        userMapper.updateById(updateObj);
+        userRepository.updateById(updateObj);
 
         // 3. 如果是禁用用户，则删除其 Token 信息
         if (CommonStatusEnum.isDisable(status)) {
@@ -287,11 +287,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         validateUserNotAdmin(id, USER_ADMIN_NOT_ALLOW_DELETE);
 
         // 2.1 删除用户
-        userMapper.deleteById(id);
+        userRepository.deleteById(id);
         // 2.2 删除用户关联数据
         permissionService.processUserDeleted(id);
         // 2.2 删除用户岗位
-        userPostMapper.deleteByUserId(id);
+        userPostRepository.deleteByUserId(id);
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("user", user);
@@ -304,12 +304,12 @@ public class AdminUserServiceImpl implements AdminUserService {
         ids.forEach(id -> validateUserNotAdmin(id, USER_ADMIN_NOT_ALLOW_DELETE));
 
         // 2. 批量删除用户
-        userMapper.deleteByIds(ids);
+        userRepository.deleteByIds(ids);
 
         // 3. 批量删除用户关联数据
         ids.forEach(id -> {
             permissionService.processUserDeleted(id);
-            userPostMapper.deleteByUserId(id);
+            userPostRepository.deleteByUserId(id);
         });
     }
 
@@ -328,12 +328,12 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public AdminUserDO getUserByUsername(String username) {
-        return userMapper.selectByUsername(username);
+        return userRepository.selectByUsername(username);
     }
 
     @Override
     public AdminUserDO getUserByMobile(String mobile) {
-        return userMapper.selectByMobile(mobile);
+        return userRepository.selectByMobile(mobile);
     }
 
     @Override
@@ -348,12 +348,12 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         // 分页查询
-        return userMapper.selectPage(reqVO, getDeptCondition(reqVO.getDeptId()), userIds);
+        return userRepository.selectPage(reqVO, getDeptCondition(reqVO.getDeptId()), userIds);
     }
 
     @Override
     public AdminUserDO getUser(Long id) {
-        return userMapper.selectById(id);
+        return userRepository.selectById(id);
     }
 
     @Override
@@ -361,7 +361,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (CollUtil.isEmpty(deptIds)) {
             return Collections.emptyList();
         }
-        return userMapper.selectListByDeptIds(deptIds);
+        return userRepository.selectListByDeptIds(deptIds);
     }
 
     @Override
@@ -369,11 +369,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (CollUtil.isEmpty(postIds)) {
             return Collections.emptyList();
         }
-        Set<Long> userIds = convertSet(userPostMapper.selectListByPostIds(postIds), UserPostDO::getUserId);
+        Set<Long> userIds = convertSet(userPostRepository.selectListByPostIds(postIds), UserPostDO::getUserId);
         if (CollUtil.isEmpty(userIds)) {
             return Collections.emptyList();
         }
-        return userMapper.selectByIds(userIds);
+        return userRepository.selectByIds(userIds);
     }
 
     @Override
@@ -381,17 +381,17 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return userMapper.selectByIds(ids);
+        return userRepository.selectByIds(ids);
     }
 
     public List<AdminUserDO> getUserListAll() {
-        return userMapper.selectList();
+        return userRepository.selectList();
     }
 
 
     @Override
     public AdminUserDO validateUser(Long id) {
-        AdminUserDO user = userMapper.selectById(id);
+        AdminUserDO user = userRepository.selectById(id);
         if (user == null) {
             throw exception(USER_NOT_EXISTS);
         }
@@ -407,7 +407,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             return;
         }
         // 获得岗位信息
-        List<AdminUserDO> users = userMapper.selectByIds(ids);
+        List<AdminUserDO> users = userRepository.selectByIds(ids);
         Map<Long, AdminUserDO> userMap = CollectionUtils.convertMap(users, AdminUserDO::getId);
         // 校验
         ids.forEach(id -> {
@@ -423,7 +423,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public List<AdminUserDO> getUserListByNickname(String nickname) {
-        return userMapper.selectListByNickname(nickname);
+        return userRepository.selectListByNickname(nickname);
     }
 
     /**
@@ -466,7 +466,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (id == null) {
             return null;
         }
-        AdminUserDO user = userMapper.selectById(id);
+        AdminUserDO user = userRepository.selectById(id);
         if (user == null) {
             throw exception(USER_NOT_EXISTS);
         }
@@ -478,7 +478,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (StrUtil.isBlank(username)) {
             return;
         }
-        AdminUserDO user = userMapper.selectByUsername(username);
+        AdminUserDO user = userRepository.selectByUsername(username);
         if (user == null) {
             return;
         }
@@ -496,7 +496,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (StrUtil.isBlank(email)) {
             return;
         }
-        AdminUserDO user = userMapper.selectByEmail(email);
+        AdminUserDO user = userRepository.selectByEmail(email);
         if (user == null) {
             return;
         }
@@ -514,7 +514,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (StrUtil.isBlank(mobile)) {
             return;
         }
-        AdminUserDO user = userMapper.selectByMobile(mobile);
+        AdminUserDO user = userRepository.selectByMobile(mobile);
         if (user == null) {
             return;
         }
@@ -534,7 +534,7 @@ public class AdminUserServiceImpl implements AdminUserService {
      */
     @VisibleForTesting
     void validateOldPassword(Long id, String oldPassword) {
-        AdminUserDO user = userMapper.selectById(id);
+        AdminUserDO user = userRepository.selectById(id);
         if (user == null) {
             throw exception(USER_NOT_EXISTS);
         }
@@ -580,9 +580,9 @@ public class AdminUserServiceImpl implements AdminUserService {
             }
 
             // 2.2.1 判断如果不存在，在进行插入
-            AdminUserDO existUser = userMapper.selectByUsername(importUser.getUsername());
+            AdminUserDO existUser = userRepository.selectByUsername(importUser.getUsername());
             if (existUser == null) {
-                userMapper.insert(BeanUtils.toBean(importUser, AdminUserDO.class)
+                userRepository.insert(BeanUtils.toBean(importUser, AdminUserDO.class)
                         .setPassword(encodePassword(initPassword)).setPostIds(new HashSet<>())); // 设置默认密码及空岗位编号数组
                 respVO.getCreateUsernames().add(importUser.getUsername());
                 return;
@@ -604,7 +604,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             // 2.2.4 更新用户
             AdminUserDO updateUser = BeanUtils.toBean(importUser, AdminUserDO.class);
             updateUser.setId(existUser.getId());
-            userMapper.updateById(updateUser);
+            userRepository.updateById(updateUser);
             respVO.getUpdateUsernames().add(importUser.getUsername());
         });
         return respVO;
@@ -617,7 +617,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public List<AdminUserDO> getUserListByStatus(Integer status, Long deptId) {
-        return userMapper.selectListByStatusAndDeptId(status, deptId);
+        return userRepository.selectListByStatusAndDeptId(status, deptId);
     }
 
     @Override

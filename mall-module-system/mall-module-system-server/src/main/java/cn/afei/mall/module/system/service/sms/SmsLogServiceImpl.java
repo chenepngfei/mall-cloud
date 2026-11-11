@@ -4,7 +4,7 @@ import cn.afei.mall.framework.common.pojo.PageResult;
 import cn.afei.mall.module.system.controller.admin.sms.vo.log.SmsLogPageReqVO;
 import cn.afei.mall.module.system.dal.dataobject.sms.SmsLogDO;
 import cn.afei.mall.module.system.dal.dataobject.sms.SmsTemplateDO;
-import cn.afei.mall.module.system.dal.mysql.sms.SmsLogMapper;
+import cn.afei.mall.module.system.dal.mysql.sms.SmsLogRepository;
 import cn.afei.mall.module.system.enums.sms.SmsReceiveStatusEnum;
 import cn.afei.mall.module.system.enums.sms.SmsSendStatusEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import java.util.Objects;
 public class SmsLogServiceImpl implements SmsLogService {
 
     @Resource
-    private SmsLogMapper smsLogMapper;
+    private SmsLogRepository smsLogRepository;
 
     @Override
     public Long createSmsLog(String mobile, Long userId, Integer userType, Boolean isSend,
@@ -48,7 +48,7 @@ public class SmsLogServiceImpl implements SmsLogService {
 
         // 插入数据库
         SmsLogDO logDO = logBuilder.build();
-        smsLogMapper.insert(logDO);
+        smsLogRepository.insert(logDO);
         return logDO.getId();
     }
 
@@ -57,7 +57,7 @@ public class SmsLogServiceImpl implements SmsLogService {
                                     String apiSendCode, String apiSendMsg,
                                     String apiRequestId, String apiSerialNo) {
         SmsSendStatusEnum sendStatus = success ? SmsSendStatusEnum.SUCCESS : SmsSendStatusEnum.FAILURE;
-        smsLogMapper.updateById(SmsLogDO.builder().id(id)
+        smsLogRepository.updateById(SmsLogDO.builder().id(id)
                 .sendStatus(sendStatus.getStatus()).sendTime(LocalDateTime.now())
                 .apiSendCode(apiSendCode).apiSendMsg(apiSendMsg)
                 .apiRequestId(apiRequestId).apiSerialNo(apiSerialNo).build());
@@ -69,24 +69,24 @@ public class SmsLogServiceImpl implements SmsLogService {
         SmsReceiveStatusEnum receiveStatus = Objects.equals(success, true) ?
                 SmsReceiveStatusEnum.SUCCESS : SmsReceiveStatusEnum.FAILURE;
         if (id == null || id == 0) {
-            SmsLogDO log = smsLogMapper.selectByApiSerialNo(apiSerialNo);
+            SmsLogDO log = smsLogRepository.selectByApiSerialNo(apiSerialNo);
             if (log == null) {
                 return;
             }
             id = log.getId();
         }
-        smsLogMapper.updateById(SmsLogDO.builder().id(id).receiveStatus(receiveStatus.getStatus())
+        smsLogRepository.updateById(SmsLogDO.builder().id(id).receiveStatus(receiveStatus.getStatus())
                 .receiveTime(receiveTime).apiReceiveCode(apiReceiveCode).apiReceiveMsg(apiReceiveMsg).build());
     }
 
     @Override
     public SmsLogDO getSmsLog(Long id) {
-        return smsLogMapper.selectById(id);
+        return smsLogRepository.selectById(id);
     }
 
     @Override
     public PageResult<SmsLogDO> getSmsLogPage(SmsLogPageReqVO pageReqVO) {
-        return smsLogMapper.selectPage(pageReqVO);
+        return smsLogRepository.selectPage(pageReqVO);
     }
 
 }
