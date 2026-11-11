@@ -26,10 +26,7 @@
         <knife4j.version>4.5.0</knife4j.version>
         <!-- DB 相关 -->
         <druid.version>1.2.28</druid.version>
-        <mybatis.version>3.5.19</mybatis.version>
-        <mybatis-plus.version>3.5.17</mybatis-plus.version>
-        <mybatis-plus-join.version>1.5.9</mybatis-plus-join.version>
-        <dynamic-datasource.version>4.6.0</dynamic-datasource.version>
+                                <dynamic-datasource.version>4.6.0</dynamic-datasource.version>
         <easy-trans.version>3.1.8</easy-trans.version>
         <redisson.version>4.8.0</redisson.version>
         <dm8.jdbc.version>8.1.3.140</dm8.jdbc.version>
@@ -226,11 +223,6 @@
             <!-- DB 相关 -->
             <dependency>
                 <groupId>cn.afei.cloud</groupId>
-                <artifactId>mall-spring-boot-starter-mybatis</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>cn.afei.cloud</groupId>
                 <artifactId>mall-spring-boot-starter-jpa</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -241,35 +233,9 @@
                 <version>${druid.version}</version>
             </dependency>
             <dependency>
-                <!-- 注意：必须声明，避免 flowable 和 mybatis-plus 引入的 mybatis 版本不一致！！！ -->
-                <groupId>org.mybatis</groupId>
-                <artifactId>mybatis</artifactId>
-                <version>${mybatis.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-                <version>${mybatis-plus.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-jsqlparser</artifactId>
-                <version>${mybatis-plus.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-generator</artifactId> <!-- 代码生成器，使用它解析表结构 -->
-                <version>${mybatis-plus.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>dynamic-datasource-spring-boot3-starter</artifactId> <!-- 多数据源 -->
                 <version>${dynamic-datasource.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.yulichang</groupId>
-                <artifactId>mybatis-plus-join-boot-starter</artifactId> <!-- MyBatis 联表查询 -->
-                <version>${mybatis-plus-join.version}</version>
             </dependency>
 
             <dependency>
@@ -286,11 +252,6 @@
                         <artifactId>spring-cloud-commons</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>easy-trans-mybatis-plus-extend</artifactId>
-                <version>${easy-trans.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.dromara</groupId>
