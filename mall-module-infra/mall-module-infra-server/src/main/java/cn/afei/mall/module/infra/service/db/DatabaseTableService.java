@@ -1,7 +1,5 @@
 package cn.afei.mall.module.infra.service.db;
 
-import com.baomidou.mybatisplus.generator.config.po.TableInfo;
-
 import java.util.List;
 
 /**
@@ -19,7 +17,7 @@ public interface DatabaseTableService {
      * @param commentLike        表描述，模糊匹配
      * @return 表列表
      */
-    List<TableInfo> getTableList(Long dataSourceConfigId, String nameLike, String commentLike);
+    List<DatabaseTableDef> getTableList(Long dataSourceConfigId, String nameLike, String commentLike);
 
     /**
      * 获得指定表名
@@ -28,6 +26,6 @@ public interface DatabaseTableService {
      * @param tableName          表名称
      * @return 表
      */
-    TableInfo getTable(Long dataSourceConfigId, String tableName);
+    DatabaseTableDef getTable(Long dataSourceConfigId, String tableName);
 
 }

@@ -8,13 +8,11 @@ import cn.afei.mall.module.infra.controller.admin.codegen.vo.column.CodegenColum
 import cn.afei.mall.module.infra.controller.admin.codegen.vo.table.CodegenTableRespVO;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenTableDO;
-import com.baomidou.mybatisplus.generator.config.po.TableField;
-import com.baomidou.mybatisplus.generator.config.po.TableInfo;
-import org.apache.ibatis.type.JdbcType;
+import cn.afei.mall.module.infra.service.db.DatabaseColumnDef;
+import cn.afei.mall.module.infra.service.db.DatabaseTableDef;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
-import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
@@ -25,31 +23,24 @@ public interface CodegenConvert {
 
     CodegenConvert INSTANCE = Mappers.getMapper(CodegenConvert.class);
 
-    // ========== TableInfo 相关 ==========
+    // ========== DatabaseTableDef 相关 ==========
 
     @Mappings({
             @Mapping(source = "name", target = "tableName"),
             @Mapping(source = "comment", target = "tableComment"),
     })
-    CodegenTableDO convert(TableInfo bean);
+    CodegenTableDO convert(DatabaseTableDef bean);
 
-    List<CodegenColumnDO> convertList(List<TableField> list);
+    List<CodegenColumnDO> convertList(List<DatabaseColumnDef> list);
 
     @Mappings({
             @Mapping(source = "name", target = "columnName"),
-            @Mapping(source = "metaInfo.jdbcType", target = "dataType", qualifiedByName = "getDataType"),
+            @Mapping(source = "jdbcType", target = "dataType"),
             @Mapping(source = "comment", target = "columnComment"),
-            @Mapping(source = "metaInfo.nullable", target = "nullable"),
             @Mapping(source = "keyFlag", target = "primaryKey"),
-            @Mapping(source = "columnType.type", target = "javaType"),
             @Mapping(source = "propertyName", target = "javaField"),
     })
-    CodegenColumnDO convert(TableField bean);
-
-    @Named("getDataType")
-    default String getDataType(JdbcType jdbcType) {
-        return jdbcType.name();
-    }
+    CodegenColumnDO convert(DatabaseColumnDef bean);
 
     // ========== 其它 ==========
 

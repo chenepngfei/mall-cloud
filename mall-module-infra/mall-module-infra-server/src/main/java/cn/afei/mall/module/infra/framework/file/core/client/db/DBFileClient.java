@@ -3,7 +3,7 @@ package cn.afei.mall.module.infra.framework.file.core.client.db;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileContentDO;
-import cn.afei.mall.module.infra.dal.mysql.file.FileContentMapper;
+import cn.afei.mall.module.infra.dal.mysql.file.FileContentRepository;
 import cn.afei.mall.module.infra.framework.file.core.client.AbstractFileClient;
 
 import java.util.Comparator;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class DBFileClient extends AbstractFileClient<DBFileClientConfig> {
 
-    private FileContentMapper fileContentMapper;
+    private FileContentRepository fileContentMapper;
 
     public DBFileClient(Long id, DBFileClientConfig config) {
         super(id, config);
@@ -24,7 +24,7 @@ public class DBFileClient extends AbstractFileClient<DBFileClientConfig> {
 
     @Override
     protected void doInit() {
-        fileContentMapper = SpringUtil.getBean(FileContentMapper.class);
+        fileContentMapper = SpringUtil.getBean(FileContentRepository.class);
     }
 
     @Override

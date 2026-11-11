@@ -2,10 +2,9 @@ package cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp;
 
 import cn.afei.mall.framework.common.pojo.PageParam;
 import cn.afei.mall.framework.common.pojo.PageResult;
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
-import cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
+import cn.afei.mall.framework.jpa.core.query.LambdaSpecifications;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -14,20 +13,19 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-@Mapper
-public interface Demo03CourseErpMapper extends BaseMapperX<Demo03CourseDO> {
+public interface Demo03CourseErpRepository extends BaseRepositoryX<Demo03CourseDO, Long> {
 
     default PageResult<Demo03CourseDO> selectPage(PageParam reqVO, Long studentId) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<Demo03CourseDO>()
+        return selectPage(reqVO, LambdaSpecifications.<Demo03CourseDO>of()
                 .eq(Demo03CourseDO::getStudentId, studentId)
-                .orderByDesc(Demo03CourseDO::getId));
+                .orderByDesc(Demo03CourseDO::getId).build());
     }
 
-    default int deleteByStudentId(Long studentId) {
+    default long deleteByStudentId(Long studentId) {
         return delete(Demo03CourseDO::getStudentId, studentId);
     }
 
-    default int deleteByStudentIds(List<Long> studentIds) {
+    default long deleteByStudentIds(List<Long> studentIds) {
         return deleteBatch(Demo03CourseDO::getStudentId, studentIds);
     }
 

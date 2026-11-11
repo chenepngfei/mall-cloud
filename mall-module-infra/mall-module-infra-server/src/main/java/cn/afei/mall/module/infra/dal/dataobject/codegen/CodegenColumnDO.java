@@ -1,13 +1,14 @@
 package cn.afei.mall.module.infra.dal.dataobject.codegen;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.infra.enums.codegen.CodegenColumnHtmlTypeEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenColumnListConditionEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.generator.config.po.TableField;
 import lombok.Data;
 
 /**
@@ -15,8 +16,8 @@ import lombok.Data;
  *
  * @author 芋道源码
  */
-@TableName(value = "infra_codegen_column", autoResultMap = true)
-@KeySequence("infra_codegen_column_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "infra_codegen_column")
 @Data
 @TenantIgnore
 public class CodegenColumnDO extends BaseDO {
@@ -24,7 +25,8 @@ public class CodegenColumnDO extends BaseDO {
     /**
      * ID 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 表编号
@@ -38,31 +40,31 @@ public class CodegenColumnDO extends BaseDO {
     /**
      * 字段名
      *
-     * 关联 {@link TableField#getName()}
+     * 关联 列名
      */
     private String columnName;
     /**
      * 数据库字段类型
      *
-     * 关联 {@link TableField.MetaInfo#getJdbcType()}
+     * 关联 JDBC 类型名
      */
     private String dataType;
     /**
      * 字段描述
      *
-     * 关联 {@link TableField#getComment()}
+     * 关联 列描述
      */
     private String columnComment;
     /**
      * 是否允许为空
      *
-     * 关联 {@link TableField.MetaInfo#isNullable()}
+     * 关联 是否可空
      */
     private Boolean nullable;
     /**
      * 是否主键
      *
-     * 关联 {@link TableField#isKeyFlag()}
+     * 关联 是否主键
      */
     private Boolean primaryKey;
     /**
@@ -77,13 +79,13 @@ public class CodegenColumnDO extends BaseDO {
      *
      * 例如说 String、Boolean 等等
      *
-     * 关联 {@link TableField#getColumnType()}
+     * 关联 Java 类型
      */
     private String javaType;
     /**
      * Java 属性名
      *
-     * 关联 {@link TableField#getPropertyName()}
+     * 关联 Java 属性名
      */
     private String javaField;
     /**

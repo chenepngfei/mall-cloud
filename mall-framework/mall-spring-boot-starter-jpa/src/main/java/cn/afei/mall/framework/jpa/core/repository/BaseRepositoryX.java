@@ -166,6 +166,22 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
         return count(LambdaSpecifications.<T>of().eq(field, value).build());
     }
 
+    // ========== 主键查询：对齐原 MyBatis Plus 的方法名 ==========
+
+    /**
+     * 按主键查询，不存在时返回 null（对齐 MP 的 selectById）
+     */
+    default T selectById(ID id) {
+        return findById(id).orElse(null);
+    }
+
+    /**
+     * 按主键批量查询（对齐 MP 的 selectBatchIds/selectByIds）
+     */
+    default List<T> selectByIds(Iterable<ID> ids) {
+        return findAllById(ids);
+    }
+
     // ========== 插入 ==========
 
     default T insert(T entity) {
@@ -182,6 +198,39 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
         return saveAll(entities);
     }
 
+    /**
+     * 选择性更新时，忽略的属性：id、审计字段、逻辑删除、租户
+     */
+    String[] IGNORED_UPDATE_PROPERTIES =
+            {"id", "createTime", "updateTime", "creator", "updater", "deleted", "tenantId"};
+
+    /**
+     * 批量按 id 选择性更新，等价于 MP 的 {@code Db.updateBatchById}
+     *
+     * @param entities 携带待更新字段的实体们
+     * @return 更新后的实体列表
+     */
+    default List<T> updateBatch(Collection<T> entities) {
+        List<T> result = new java.util.ArrayList<>(entities.size());
+        entities.forEach(entity -> result.add(updateById(entity)));
+        return result;
+    }
+
+    /**
+     * 按非空字段更新全部记录，等价于 MP 的 {@code updateBatch(T update)}（无条件的批量选择性更新）
+     *
+     * @param update 携带待更新字段的实体
+     * @return 更新的记录数
+     */
+    default long updateBatch(T update) {
+        List<T> list = findAll();
+        for (T entity : list) {
+            cn.hutool.core.bean.BeanUtil.copyProperties(update, entity, cn.hutool.core.bean.copier.CopyOptions.create()
+                    .ignoreNullValue().setIgnoreProperties(IGNORED_UPDATE_PROPERTIES));
+        }
+        return saveAll(list).size();
+    }
+
     // ========== 更新 ==========
 
     /**
@@ -193,6 +242,18 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
      * @return 更新后的实体
      */
     T updateByIdSelective(T entity);
+
+    /**
+     * 按 id 选择性更新的别名，对齐 MP 的 updateById 方法名
+     */
+    default T updateById(T entity) {
+        return updateByIdSelective(entity);
+    }
+
+    /**
+     * 插入或更新，等价于 MP 的 {@code insertOrUpdate}：id 为空插入；id 非空时按 id 选择性更新，不存在则插入
+     */
+    T insertOrUpdate(T entity);
 
     // ========== 删除（走软删） ==========
 
@@ -220,6 +281,13 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
             return 0;
         }
         return delete(LambdaSpecifications.<T>of().in(field, values).build());
+    }
+
+    /**
+     * 按主键批量删除（对齐 MP 的 deleteByIds），走软删
+     */
+    default void deleteByIds(Iterable<? extends ID> ids) {
+        deleteAllById(ids);
     }
 
     // ========== 锁定读：需要在事务中调用 ==========

@@ -9,9 +9,9 @@ import cn.afei.mall.module.infra.controller.admin.demo.demo03.normal.vo.Demo03St
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal.Demo03CourseNormalMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal.Demo03GradeNormalMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal.Demo03StudentNormalMapper;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal.Demo03CourseNormalRepository;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal.Demo03GradeNormalRepository;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal.Demo03StudentNormalRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,11 +34,11 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DEMO03_STUDENT_
 public class Demo03StudentNormalServiceImpl implements Demo03StudentNormalService {
 
     @Resource
-    private Demo03StudentNormalMapper demo03StudentNormalMapper;
+    private Demo03StudentNormalRepository demo03StudentNormalMapper;
     @Resource
-    private Demo03CourseNormalMapper demo03CourseNormalMapper;
+    private Demo03CourseNormalRepository demo03CourseNormalMapper;
     @Resource
-    private Demo03GradeNormalMapper demo03GradeNormalMapper;
+    private Demo03GradeNormalRepository demo03GradeNormalMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

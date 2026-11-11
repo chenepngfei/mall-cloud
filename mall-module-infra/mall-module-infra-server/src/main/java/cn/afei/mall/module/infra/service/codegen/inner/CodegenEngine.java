@@ -23,9 +23,9 @@ import cn.afei.mall.framework.common.util.string.StrUtils;
 import cn.afei.mall.framework.excel.core.annotations.DictFormat;
 import cn.afei.mall.framework.excel.core.convert.DictConvert;
 import cn.afei.mall.framework.excel.core.util.ExcelUtils;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
-import cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
+import cn.afei.mall.framework.jpa.core.query.LambdaSpecifications;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.afei.mall.module.infra.enums.codegen.CodegenFrontTypeEnum;
@@ -33,7 +33,7 @@ import cn.afei.mall.module.infra.enums.codegen.CodegenSceneEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenTemplateTypeEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenVOTypeEnum;
 import cn.afei.mall.module.infra.framework.codegen.config.CodegenProperties;
-import com.baomidou.mybatisplus.annotation.DbType;
+import cn.afei.mall.framework.jpa.core.enums.DbType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Maps;
@@ -82,11 +82,10 @@ public class CodegenEngine {
                     javaModuleImplMainFilePath("dal/dataobject/${table.businessName}/${table.className}DO"))
             .put(javaTemplatePath("dal/do_sub"), // 特殊：主子表专属逻辑
                     javaModuleImplMainFilePath("dal/dataobject/${table.businessName}/${subTable.className}DO"))
-            .put(javaTemplatePath("dal/mapper"),
-                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${table.className}Mapper"))
-            .put(javaTemplatePath("dal/mapper_sub"), // 特殊：主子表专属逻辑
-                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${subTable.className}Mapper"))
-            .put(javaTemplatePath("dal/mapper.xml"), mapperXmlFilePath())
+            .put(javaTemplatePath("dal/repository"),
+                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${table.className}Repository"))
+            .put(javaTemplatePath("dal/repository_sub"), // 特殊：主子表专属逻辑
+                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${subTable.className}Repository"))
             .put(javaTemplatePath("service/serviceImpl"),
                     javaModuleImplMainFilePath("service/${table.businessName}/${table.className}ServiceImpl"))
             .put(javaTemplatePath("service/service"),
@@ -359,8 +358,8 @@ public class CodegenEngine {
         // DO 类，独有字段
         globalBindingMap.put("BaseDOClassName", BaseDO.class.getName());
         globalBindingMap.put("baseDOFields", CodegenBuilder.BASE_DO_FIELDS);
-        globalBindingMap.put("QueryWrapperClassName", LambdaQueryWrapperX.class.getName());
-        globalBindingMap.put("BaseMapperClassName", BaseMapperX.class.getName());
+        globalBindingMap.put("QueryWrapperClassName", LambdaSpecifications.class.getName());
+        globalBindingMap.put("BaseMapperClassName", BaseRepositoryX.class.getName());
         // Util 工具类
         globalBindingMap.put("ServiceExceptionUtilClassName", ServiceExceptionUtil.class.getName());
         globalBindingMap.put("DateUtilsClassName", DateUtils.class.getName());
@@ -717,12 +716,6 @@ public class CodegenEngine {
         return "mall-module-${table.moduleName}/" + // 顶级模块
                 "mall-module-${table.moduleName}-" + module + "/" + // 子模块
                 "src/" + src + "/java/${basePackage}/module/${table.moduleName}/" + path + ".java";
-    }
-
-    private static String mapperXmlFilePath() {
-        return "mall-module-${table.moduleName}/" + // 顶级模块
-                "mall-module-${table.moduleName}-server/" + // 子模块
-                "src/main/resources/mapper/${table.businessName}/${table.className}Mapper.xml";
     }
 
     private static String vueTemplatePath(String path) {

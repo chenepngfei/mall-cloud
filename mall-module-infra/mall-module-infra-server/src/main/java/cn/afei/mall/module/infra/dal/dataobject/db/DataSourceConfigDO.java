@@ -1,11 +1,15 @@
 package cn.afei.mall.module.infra.dal.dataobject.db;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.type.EncryptTypeHandler;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
@@ -13,8 +17,8 @@ import lombok.Data;
  *
  * @author 芋道源码
  */
-@TableName(value = "infra_data_source_config", autoResultMap = true)
-@KeySequence("infra_data_source_config_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "infra_data_source_config")
 @Data
 @TenantIgnore
 public class DataSourceConfigDO extends BaseDO {
@@ -27,6 +31,8 @@ public class DataSourceConfigDO extends BaseDO {
     /**
      * 主键编号
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 连接名
@@ -44,7 +50,7 @@ public class DataSourceConfigDO extends BaseDO {
     /**
      * 密码
      */
-    @TableField(typeHandler = EncryptTypeHandler.class)
+    @Convert(converter = cn.afei.mall.framework.jpa.core.convert.EncryptConverter.class)
     private String password;
 
 }

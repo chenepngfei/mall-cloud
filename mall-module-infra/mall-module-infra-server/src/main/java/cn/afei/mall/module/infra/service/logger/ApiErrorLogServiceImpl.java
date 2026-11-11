@@ -8,7 +8,7 @@ import cn.afei.mall.framework.tenant.core.context.TenantContextHolder;
 import cn.afei.mall.framework.tenant.core.util.TenantUtils;
 import cn.afei.mall.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.logger.ApiErrorLogDO;
-import cn.afei.mall.module.infra.dal.mysql.logger.ApiErrorLogMapper;
+import cn.afei.mall.module.infra.dal.mysql.logger.ApiErrorLogRepository;
 import cn.afei.mall.module.infra.enums.logger.ApiErrorLogProcessStatusEnum;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_P
 public class ApiErrorLogServiceImpl implements ApiErrorLogService {
 
     @Resource
-    private ApiErrorLogMapper apiErrorLogMapper;
+    private ApiErrorLogRepository apiErrorLogMapper;
 
     @Override
     public void createApiErrorLog(ApiErrorLogCreateReqDTO createDTO) {

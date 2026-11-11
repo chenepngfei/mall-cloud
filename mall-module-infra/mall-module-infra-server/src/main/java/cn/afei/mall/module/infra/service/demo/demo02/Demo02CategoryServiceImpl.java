@@ -4,7 +4,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.infra.controller.admin.demo.demo02.vo.Demo02CategoryListReqVO;
 import cn.afei.mall.module.infra.controller.admin.demo.demo02.vo.Demo02CategorySaveReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo02.Demo02CategoryDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo02.Demo02CategoryMapper;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo02.Demo02CategoryRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +25,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.*;
 public class Demo02CategoryServiceImpl implements Demo02CategoryService {
 
     @Resource
-    private Demo02CategoryMapper demo02CategoryMapper;
+    private Demo02CategoryRepository demo02CategoryMapper;
 
     @Override
     public Long createDemo02Category(Demo02CategorySaveReqVO createReqVO) {

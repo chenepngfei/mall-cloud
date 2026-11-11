@@ -6,7 +6,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.infra.controller.admin.demo.demo01.vo.Demo01ContactPageReqVO;
 import cn.afei.mall.module.infra.controller.admin.demo.demo01.vo.Demo01ContactSaveReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo01.Demo01ContactDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo01.Demo01ContactMapper;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo01.Demo01ContactRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -26,7 +26,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DEMO01_CONTACT_
 public class Demo01ContactServiceImpl implements Demo01ContactService {
 
     @Resource
-    private Demo01ContactMapper demo01ContactMapper;
+    private Demo01ContactRepository demo01ContactMapper;
 
     @Override
     public Long createDemo01Contact(Demo01ContactSaveReqVO createReqVO) {

@@ -159,6 +159,13 @@ public class LambdaSpecifications<T> {
         return this;
     }
 
+    public LambdaSpecifications<T> like(SFunction<T, ?> column, String val) {
+        if (val != null) {
+            conditions.add((path, cb) -> cb.like(path.<String>get(propertyName(column)), "%" + val + "%"));
+        }
+        return this;
+    }
+
     public LambdaSpecifications<T> ne(SFunction<T, ?> column, Object val) {
         conditions.add((path, cb) -> cb.notEqual(path.get(propertyName(column)), val));
         return this;

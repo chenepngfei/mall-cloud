@@ -215,6 +215,24 @@ public class BaseRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implem
 
     @Override
     @Transactional
+    @SuppressWarnings("unchecked")
+    public T insertOrUpdate(T entity) {
+        applySessionHooks();
+        ID id = (ID) entityInformation.getId(entity);
+        if (id == null) {
+            return save(entity);
+        }
+        T existing = (T) entityManager.find(getDomainClass(), id);
+        if (existing == null) {
+            return save(entity);
+        }
+        BeanUtil.copyProperties(entity, existing, CopyOptions.create()
+                .ignoreNullValue().setIgnoreProperties(IGNORED_PROPERTIES));
+        return save(existing);
+    }
+
+    @Override
+    @Transactional
     public T selectOneForUpdate(Specification<T> spec) {
         List<T> list = selectListForUpdate(spec);
         if (list.size() > 1) {

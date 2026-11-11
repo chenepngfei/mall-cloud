@@ -6,7 +6,6 @@ import ${PageResultClassName};
 import ${QueryWrapperClassName};
 import ${BaseMapperClassName};
 import ${basePackage}.module.${table.moduleName}.dal.dataobject.${table.businessName}.${table.className}DO;
-import org.apache.ibatis.annotations.Mapper;
 import ${basePackage}.module.${table.moduleName}.controller.${sceneEnum.basePackage}.${table.businessName}.vo.*;
 
 ## 字段模板
@@ -42,26 +41,25 @@ import ${basePackage}.module.${table.moduleName}.controller.${sceneEnum.basePack
 #end
 #end
 /**
- * ${table.classComment} Mapper
+ * ${table.classComment} Repository
  *
  * @author ${table.author}
  */
-@Mapper
-public interface ${table.className}Mapper extends BaseMapperX<${table.className}DO> {
+public interface ${table.className}Repository extends BaseRepositoryX<${table.className}DO, Long> {
 
 ## 特殊：树表专属逻辑（树不需要分页接口）
 #if ( $table.templateType != 2 )
     default PageResult<${table.className}DO> selectPage(${sceneEnum.prefixClass}${table.className}PageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<${table.className}DO>()
+        return selectPage(reqVO, LambdaSpecifications.<${table.className}DO>of()
 			#listCondition()
-                .orderByDesc(${table.className}DO::getId));## 大多数情况下，id 倒序
+                .orderByDesc(${table.className}DO::getId).build());## 大多数情况下，id 倒序
 
     }
 #else
     default List<${table.className}DO> selectList(${sceneEnum.prefixClass}${table.className}ListReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<${table.className}DO>()
+        return selectList(LambdaSpecifications.<${table.className}DO>of()
 			#listCondition()
-                .orderByDesc(${table.className}DO::getId));## 大多数情况下，id 倒序
+                .orderByDesc(${table.className}DO::getId).build());## 大多数情况下，id 倒序
 
     }
 #end

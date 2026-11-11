@@ -8,7 +8,7 @@ import cn.afei.mall.framework.tenant.core.context.TenantContextHolder;
 import cn.afei.mall.framework.tenant.core.util.TenantUtils;
 import cn.afei.mall.module.infra.controller.admin.logger.vo.apiaccesslog.ApiAccessLogPageReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.logger.ApiAccessLogDO;
-import cn.afei.mall.module.infra.dal.mysql.logger.ApiAccessLogMapper;
+import cn.afei.mall.module.infra.dal.mysql.logger.ApiAccessLogRepository;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ import static cn.afei.mall.module.infra.dal.dataobject.logger.ApiAccessLogDO.RES
 public class ApiAccessLogServiceImpl implements ApiAccessLogService {
 
     @Resource
-    private ApiAccessLogMapper apiAccessLogMapper;
+    private ApiAccessLogRepository apiAccessLogMapper;
 
     @Override
     public void createApiAccessLog(ApiAccessLogCreateReqDTO createDTO) {

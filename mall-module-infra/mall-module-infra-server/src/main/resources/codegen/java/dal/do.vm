@@ -10,8 +10,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 #end
 #end
-import com.baomidou.mybatisplus.annotation.*;
 import ${BaseDOClassName};
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 ## 处理 Excel 导出 + Schema 注解（仅 DO 模式）
 #if ($voType == 20)
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,8 +34,8 @@ import org.apache.fesod.sheet.annotation.*;
  *
  * @author ${table.author}
  */
-@TableName("${table.tableName.toLowerCase()}")
-@KeySequence("${table.tableName.toLowerCase()}_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "${table.tableName.toLowerCase()}")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -60,7 +64,10 @@ public class ${table.className}DO extends BaseDO {
     #end
      */
     #if (${column.primaryKey})##处理主键
-    @TableId#if (${column.javaType} == 'String')(type = IdType.INPUT)#end
+    @Id
+    #if (${column.javaType} != 'String')
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    #end
     #end
 #if ($voType == 20)
 ## 1. 处理 Swagger 注解

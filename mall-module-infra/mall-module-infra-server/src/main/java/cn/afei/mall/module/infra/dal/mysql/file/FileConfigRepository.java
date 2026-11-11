@@ -1,21 +1,19 @@
 package cn.afei.mall.module.infra.dal.mysql.file;
 
 import cn.afei.mall.framework.common.pojo.PageResult;
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
-import cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
+import cn.afei.mall.framework.jpa.core.query.LambdaSpecifications;
 import cn.afei.mall.module.infra.controller.admin.file.vo.config.FileConfigPageReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileConfigDO;
-import org.apache.ibatis.annotations.Mapper;
 
-@Mapper
-public interface FileConfigMapper extends BaseMapperX<FileConfigDO> {
+public interface FileConfigRepository extends BaseRepositoryX<FileConfigDO, Long> {
 
     default PageResult<FileConfigDO> selectPage(FileConfigPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<FileConfigDO>()
+        return selectPage(reqVO, LambdaSpecifications.<FileConfigDO>of()
                 .likeIfPresent(FileConfigDO::getName, reqVO.getName())
                 .eqIfPresent(FileConfigDO::getStorage, reqVO.getStorage())
                 .betweenIfPresent(FileConfigDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(FileConfigDO::getId));
+                .orderByDesc(FileConfigDO::getId).build());
     }
 
     default FileConfigDO selectByMaster() {

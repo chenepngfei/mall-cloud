@@ -10,7 +10,7 @@ import cn.afei.mall.module.infra.controller.admin.file.vo.config.FileConfigPageR
 import cn.afei.mall.module.infra.controller.admin.file.vo.config.FileConfigSaveReqVO;
 import cn.afei.mall.module.infra.convert.file.FileConfigConvert;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileConfigDO;
-import cn.afei.mall.module.infra.dal.mysql.file.FileConfigMapper;
+import cn.afei.mall.module.infra.dal.mysql.file.FileConfigRepository;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClient;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClientConfig;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClientFactory;
@@ -70,7 +70,7 @@ public class FileConfigServiceImpl implements FileConfigService {
     private FileClientFactory fileClientFactory;
 
     @Resource
-    private FileConfigMapper fileConfigMapper;
+    private FileConfigRepository fileConfigMapper;
 
     @Resource
     private Validator validator;

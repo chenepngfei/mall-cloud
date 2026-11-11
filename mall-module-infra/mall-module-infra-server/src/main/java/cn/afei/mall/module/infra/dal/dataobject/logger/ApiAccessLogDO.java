@@ -3,10 +3,14 @@ package cn.afei.mall.module.infra.dal.dataobject.logger;
 import cn.afei.mall.framework.apilog.core.enums.OperateTypeEnum;
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
 import cn.afei.mall.framework.common.pojo.CommonResult;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -16,8 +20,8 @@ import java.time.LocalDateTime;
  *
  * @author 芋道源码
  */
-@TableName("infra_api_access_log")
-@KeySequence(value = "infra_api_access_log_seq")
+@Entity
+@Table(name = "infra_api_access_log")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -39,7 +43,8 @@ public class ApiAccessLogDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 链路追踪编号

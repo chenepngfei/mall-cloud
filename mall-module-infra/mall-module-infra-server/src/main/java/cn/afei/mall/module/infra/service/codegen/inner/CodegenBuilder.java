@@ -3,15 +3,15 @@ package cn.afei.mall.module.infra.service.codegen.inner;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
 import cn.afei.mall.module.infra.convert.codegen.CodegenConvert;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.afei.mall.module.infra.enums.codegen.CodegenColumnHtmlTypeEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenColumnListConditionEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenTemplateTypeEnum;
-import com.baomidou.mybatisplus.generator.config.po.TableField;
-import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+import cn.afei.mall.module.infra.service.db.DatabaseColumnDef;
+import cn.afei.mall.module.infra.service.db.DatabaseTableDef;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import org.springframework.stereotype.Component;
@@ -25,8 +25,8 @@ import static cn.hutool.core.util.RandomUtil.randomInt;
 
 /**
  * 代码生成器的 Builder，负责：
- * 1. 将数据库的表 {@link TableInfo} 定义，构建成 {@link CodegenTableDO}
- * 2. 将数据库的列 {@link TableField} 构定义，建成 {@link CodegenColumnDO}
+ * 1. 将数据库的表 {@link DatabaseTableDef} 定义，构建成 {@link CodegenTableDO}
+ * 2. 将数据库的列 {@link DatabaseColumnDef} 构定义，建成 {@link CodegenColumnDO}
  */
 @Component
 public class CodegenBuilder {
@@ -65,7 +65,7 @@ public class CodegenBuilder {
      */
     public static final String TENANT_ID_FIELD = "tenantId";
     /**
-     * {@link cn.afei.mall.framework.mybatis.core.dataobject.BaseDO} 的字段
+     * {@link cn.afei.mall.framework.jpa.core.dataobject.BaseDO} 的字段
      */
     public static final Set<String> BASE_DO_FIELDS = new HashSet<>();
     /**
@@ -97,7 +97,7 @@ public class CodegenBuilder {
         LIST_OPERATION_RESULT_EXCLUDE_COLUMN.remove("createTime"); // 创建时间，还是需要返回的
     }
 
-    public CodegenTableDO buildTable(TableInfo tableInfo) {
+    public CodegenTableDO buildTable(DatabaseTableDef tableInfo) {
         CodegenTableDO table = CodegenConvert.INSTANCE.convert(tableInfo);
         initTableDefault(table);
         return table;
@@ -123,7 +123,7 @@ public class CodegenBuilder {
         table.setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
     }
 
-    public List<CodegenColumnDO> buildColumns(Long tableId, List<TableField> tableFields) {
+    public List<CodegenColumnDO> buildColumns(Long tableId, List<DatabaseColumnDef> tableFields) {
         List<CodegenColumnDO> columns = CodegenConvert.INSTANCE.convertList(tableFields);
         int index = 1;
         for (CodegenColumnDO column : columns) {

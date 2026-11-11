@@ -1,10 +1,10 @@
 package cn.afei.mall.module.infra.service.db;
 
 import cn.afei.mall.framework.common.util.object.BeanUtils;
-import cn.afei.mall.framework.mybatis.core.util.JdbcUtils;
+import cn.afei.mall.framework.jpa.core.util.JdbcUtils;
 import cn.afei.mall.module.infra.controller.admin.db.vo.DataSourceConfigSaveReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.db.DataSourceConfigDO;
-import cn.afei.mall.module.infra.dal.mysql.db.DataSourceConfigMapper;
+import cn.afei.mall.module.infra.dal.mysql.db.DataSourceConfigRepository;
 import com.baomidou.dynamic.datasource.creator.DataSourceProperty;
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties;
 import jakarta.annotation.Resource;
@@ -28,7 +28,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DATA_SOURCE_CON
 public class DataSourceConfigServiceImpl implements DataSourceConfigService {
 
     @Resource
-    private DataSourceConfigMapper dataSourceConfigMapper;
+    private DataSourceConfigRepository dataSourceConfigMapper;
 
     @Resource
     private DynamicDataSourceProperties dynamicDataSourceProperties;

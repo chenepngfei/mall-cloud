@@ -26,7 +26,7 @@ import jakarta.persistence.PrePersist;
 @MappedSuperclass
 @Data
 @EqualsAndHashCode(callSuper = true)
-@FilterDef(name = TenantBaseDO.TENANT_FILTER_NAME,
+@FilterDef(name = TenantBaseDO.TENANT_FILTER_NAME, applyToLoadByKey = true,
         parameters = @ParamDef(name = "tenantId", type = Long.class))
 public abstract class TenantBaseDO extends BaseDO {
 

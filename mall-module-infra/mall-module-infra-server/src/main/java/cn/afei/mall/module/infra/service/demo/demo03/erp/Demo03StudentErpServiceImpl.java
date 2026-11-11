@@ -9,9 +9,9 @@ import cn.afei.mall.module.infra.controller.admin.demo.demo03.erp.vo.Demo03Stude
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp.Demo03CourseErpMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp.Demo03GradeErpMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp.Demo03StudentErpMapper;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp.Demo03CourseErpRepository;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp.Demo03GradeErpRepository;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.erp.Demo03StudentErpRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +32,11 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.*;
 public class Demo03StudentErpServiceImpl implements Demo03StudentErpService {
 
     @Resource
-    private Demo03StudentErpMapper demo03StudentErpMapper;
+    private Demo03StudentErpRepository demo03StudentErpMapper;
     @Resource
-    private Demo03CourseErpMapper demo03CourseErpMapper;
+    private Demo03CourseErpRepository demo03CourseErpMapper;
     @Resource
-    private Demo03GradeErpMapper demo03GradeErpMapper;
+    private Demo03GradeErpRepository demo03GradeErpMapper;
 
     @Override
     public Long createDemo03Student(Demo03StudentErpSaveReqVO createReqVO) {

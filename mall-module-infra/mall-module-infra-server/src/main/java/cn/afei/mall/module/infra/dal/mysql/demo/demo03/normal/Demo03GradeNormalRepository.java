@@ -1,8 +1,7 @@
-package cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner;
+package cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal;
 
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -11,18 +10,17 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-@Mapper
-public interface Demo03GradeInnerMapper extends BaseMapperX<Demo03GradeDO> {
+public interface Demo03GradeNormalRepository extends BaseRepositoryX<Demo03GradeDO, Long> {
 
     default Demo03GradeDO selectByStudentId(Long studentId) {
         return selectOne(Demo03GradeDO::getStudentId, studentId);
     }
 
-    default int deleteByStudentId(Long studentId) {
+    default long deleteByStudentId(Long studentId) {
         return delete(Demo03GradeDO::getStudentId, studentId);
     }
 
-    default int deleteByStudentIds(List<Long> studentIds) {
+    default long deleteByStudentIds(List<Long> studentIds) {
         return deleteBatch(Demo03GradeDO::getStudentId, studentIds);
     }
 

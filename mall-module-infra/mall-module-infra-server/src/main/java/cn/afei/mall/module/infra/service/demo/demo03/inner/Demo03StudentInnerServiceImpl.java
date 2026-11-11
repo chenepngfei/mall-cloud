@@ -9,9 +9,9 @@ import cn.afei.mall.module.infra.controller.admin.demo.demo03.inner.vo.Demo03Stu
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03CourseInnerMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03GradeInnerMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03StudentInnerMapper;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03CourseInnerRepository;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03GradeInnerRepository;
+import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03StudentInnerRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,11 +34,11 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DEMO03_STUDENT_
 public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService {
 
     @Resource
-    private Demo03StudentInnerMapper demo03StudentInnerMapper;
+    private Demo03StudentInnerRepository demo03StudentInnerMapper;
     @Resource
-    private Demo03CourseInnerMapper demo03CourseInnerMapper;
+    private Demo03CourseInnerRepository demo03CourseInnerMapper;
     @Resource
-    private Demo03GradeInnerMapper demo03GradeInnerMapper;
+    private Demo03GradeInnerRepository demo03GradeInnerMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

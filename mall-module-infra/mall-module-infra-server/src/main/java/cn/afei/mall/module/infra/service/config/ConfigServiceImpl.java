@@ -5,7 +5,7 @@ import cn.afei.mall.module.infra.controller.admin.config.vo.ConfigPageReqVO;
 import cn.afei.mall.module.infra.controller.admin.config.vo.ConfigSaveReqVO;
 import cn.afei.mall.module.infra.convert.config.ConfigConvert;
 import cn.afei.mall.module.infra.dal.dataobject.config.ConfigDO;
-import cn.afei.mall.module.infra.dal.mysql.config.ConfigMapper;
+import cn.afei.mall.module.infra.dal.mysql.config.ConfigRepository;
 import cn.afei.mall.module.infra.enums.config.ConfigTypeEnum;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
@@ -27,7 +27,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.*;
 public class ConfigServiceImpl implements ConfigService {
 
     @Resource
-    private ConfigMapper configMapper;
+    private ConfigRepository configMapper;
 
     @Override
     public Long createConfig(ConfigSaveReqVO createReqVO) {

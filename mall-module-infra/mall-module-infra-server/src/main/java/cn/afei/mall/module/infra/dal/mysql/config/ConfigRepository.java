@@ -1,26 +1,24 @@
 package cn.afei.mall.module.infra.dal.mysql.config;
 
 import cn.afei.mall.framework.common.pojo.PageResult;
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
-import cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
+import cn.afei.mall.framework.jpa.core.query.LambdaSpecifications;
 import cn.afei.mall.module.infra.controller.admin.config.vo.ConfigPageReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.config.ConfigDO;
-import org.apache.ibatis.annotations.Mapper;
 
-@Mapper
-public interface ConfigMapper extends BaseMapperX<ConfigDO> {
+public interface ConfigRepository extends BaseRepositoryX<ConfigDO, Long> {
 
     default ConfigDO selectByKey(String key) {
         return selectOne(ConfigDO::getConfigKey, key);
     }
 
     default PageResult<ConfigDO> selectPage(ConfigPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ConfigDO>()
+        return selectPage(reqVO, LambdaSpecifications.<ConfigDO>of()
                 .likeIfPresent(ConfigDO::getName, reqVO.getName())
                 .likeIfPresent(ConfigDO::getConfigKey, reqVO.getKey())
                 .eqIfPresent(ConfigDO::getType, reqVO.getType())
                 .betweenIfPresent(ConfigDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(ConfigDO::getId));
+                .orderByDesc(ConfigDO::getId).build());
     }
 
 }

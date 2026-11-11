@@ -1,15 +1,16 @@
 package cn.afei.mall.module.infra.dal.dataobject.codegen;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.infra.dal.dataobject.db.DataSourceConfigDO;
 import cn.afei.mall.module.infra.enums.codegen.CodegenFrontTypeEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenSceneEnum;
 import cn.afei.mall.module.infra.enums.codegen.CodegenTemplateTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import lombok.Data;
 
 /**
@@ -17,8 +18,8 @@ import lombok.Data;
  *
  * @author 芋道源码
  */
-@TableName(value = "infra_codegen_table", autoResultMap = true)
-@KeySequence("infra_codegen_table_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "infra_codegen_table")
 @Data
 @TenantIgnore
 public class CodegenTableDO extends BaseDO {
@@ -26,7 +27,8 @@ public class CodegenTableDO extends BaseDO {
     /**
      * ID 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
@@ -47,13 +49,13 @@ public class CodegenTableDO extends BaseDO {
     /**
      * 表名称
      *
-     * 关联 {@link TableInfo#getName()}
+     * 关联表名称
      */
     private String tableName;
     /**
      * 表描述
      *
-     * 关联 {@link TableInfo#getComment()}
+     * 关联表描述
      */
     private String tableComment;
     /**

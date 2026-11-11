@@ -1,16 +1,14 @@
 package cn.afei.mall.module.infra.dal.mysql.codegen;
 
 import cn.afei.mall.framework.common.pojo.PageResult;
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
-import cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
+import cn.afei.mall.framework.jpa.core.query.LambdaSpecifications;
 import cn.afei.mall.module.infra.controller.admin.codegen.vo.table.CodegenTablePageReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenTableDO;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
-@Mapper
-public interface CodegenTableMapper extends BaseMapperX<CodegenTableDO> {
+public interface CodegenTableRepository extends BaseRepositoryX<CodegenTableDO, Long> {
 
     default CodegenTableDO selectByTableNameAndDataSourceConfigId(String tableName, Long dataSourceConfigId) {
         return selectOne(CodegenTableDO::getTableName, tableName,
@@ -18,12 +16,12 @@ public interface CodegenTableMapper extends BaseMapperX<CodegenTableDO> {
     }
 
     default PageResult<CodegenTableDO> selectPage(CodegenTablePageReqVO pageReqVO) {
-        return selectPage(pageReqVO, new LambdaQueryWrapperX<CodegenTableDO>()
+        return selectPage(pageReqVO, LambdaSpecifications.<CodegenTableDO>of()
                 .likeIfPresent(CodegenTableDO::getTableName, pageReqVO.getTableName())
                 .likeIfPresent(CodegenTableDO::getTableComment, pageReqVO.getTableComment())
                 .likeIfPresent(CodegenTableDO::getClassName, pageReqVO.getClassName())
                 .betweenIfPresent(CodegenTableDO::getCreateTime, pageReqVO.getCreateTime())
-                .orderByDesc(CodegenTableDO::getUpdateTime)
+                .orderByDesc(CodegenTableDO::getUpdateTime).build()
         );
     }
 

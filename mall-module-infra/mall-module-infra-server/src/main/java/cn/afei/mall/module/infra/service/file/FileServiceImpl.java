@@ -15,7 +15,7 @@ import cn.afei.mall.module.infra.controller.admin.file.vo.file.FileCreateReqVO;
 import cn.afei.mall.module.infra.controller.admin.file.vo.file.FilePageReqVO;
 import cn.afei.mall.module.infra.controller.admin.file.vo.file.FilePresignedUrlRespVO;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileDO;
-import cn.afei.mall.module.infra.dal.mysql.file.FileMapper;
+import cn.afei.mall.module.infra.dal.mysql.file.FileRepository;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClient;
 import cn.afei.mall.module.infra.framework.file.core.utils.FilePathUtils;
 import cn.afei.mall.module.infra.framework.file.core.utils.FileTypeUtils;
@@ -97,7 +97,7 @@ public class FileServiceImpl implements FileService {
     private FileConfigService fileConfigService;
 
     @Resource
-    private FileMapper fileMapper;
+    private FileRepository fileMapper;
 
     @Override
     public PageResult<FileDO> getFilePage(FilePageReqVO pageReqVO) {

@@ -1,32 +1,29 @@
 package cn.afei.mall.module.infra.dal.dataobject.file;
 
-import cn.hutool.core.util.StrUtil;
 import cn.afei.mall.framework.common.util.json.JsonUtils;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
+import cn.afei.mall.framework.jpa.core.dataobject.BaseDO;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClientConfig;
-import cn.afei.mall.module.infra.framework.file.core.client.db.DBFileClientConfig;
-import cn.afei.mall.module.infra.framework.file.core.client.ftp.FtpFileClientConfig;
-import cn.afei.mall.module.infra.framework.file.core.client.local.LocalFileClientConfig;
-import cn.afei.mall.module.infra.framework.file.core.client.s3.S3FileClientConfig;
-import cn.afei.mall.module.infra.framework.file.core.client.sftp.SftpFileClientConfig;
+import cn.afei.mall.module.infra.framework.file.core.client.FileClientConfigConverter;
 import cn.afei.mall.module.infra.framework.file.core.enums.FileStorageEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.AbstractJsonTypeHandler;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.*;
 
-import java.lang.reflect.Field;
 
 /**
  * 文件配置表
  *
  * @author 芋道源码
  */
-@TableName(value = "infra_file_config", autoResultMap = true)
-@KeySequence("infra_file_config_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "infra_file_config")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -39,6 +36,8 @@ public class FileConfigDO extends BaseDO {
     /**
      * 配置编号，数据库自增
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 配置名
@@ -64,50 +63,8 @@ public class FileConfigDO extends BaseDO {
     /**
      * 支付渠道配置
      */
-    @TableField(typeHandler = FileClientConfigTypeHandler.class)
+    @Convert(converter = FileClientConfigConverter.class)
     private FileClientConfig config;
 
-    public static class FileClientConfigTypeHandler extends AbstractJsonTypeHandler<Object> {
-
-        public FileClientConfigTypeHandler(Class<?> type) {
-            super(type);
-        }
-
-        public FileClientConfigTypeHandler(Class<?> type, Field field) {
-            super(type, field);
-        }
-
-        @Override
-        public Object parse(String json) {
-            FileClientConfig config = JsonUtils.parseObjectQuietly(json, new TypeReference<>() {});
-            if (config != null) {
-                return config;
-            }
-
-            // 兼容老版本的包路径
-            String className = JsonUtils.parseObject(json, "@class", String.class);
-            className = StrUtil.subAfter(className, ".", true);
-            switch (className) {
-                case "DBFileClientConfig":
-                    return JsonUtils.parseObject2(json, DBFileClientConfig.class);
-                case "FtpFileClientConfig":
-                    return JsonUtils.parseObject2(json, FtpFileClientConfig.class);
-                case "LocalFileClientConfig":
-                    return JsonUtils.parseObject2(json, LocalFileClientConfig.class);
-                case "SftpFileClientConfig":
-                    return JsonUtils.parseObject2(json, SftpFileClientConfig.class);
-                case "S3FileClientConfig":
-                    return JsonUtils.parseObject2(json, S3FileClientConfig.class);
-                default:
-                    throw new IllegalArgumentException("未知的 FileClientConfig 类型：" + json);
-            }
-        }
-
-        @Override
-        public String toJson(Object obj) {
-            return JsonUtils.toJsonString(obj);
-        }
-
-    }
 
 }

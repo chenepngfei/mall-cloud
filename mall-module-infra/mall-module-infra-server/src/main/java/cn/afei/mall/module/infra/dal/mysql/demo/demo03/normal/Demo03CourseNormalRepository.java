@@ -1,8 +1,7 @@
 package cn.afei.mall.module.infra.dal.mysql.demo.demo03.normal;
 
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
+import cn.afei.mall.framework.jpa.core.repository.BaseRepositoryX;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -11,18 +10,17 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-@Mapper
-public interface Demo03CourseNormalMapper extends BaseMapperX<Demo03CourseDO> {
+public interface Demo03CourseNormalRepository extends BaseRepositoryX<Demo03CourseDO, Long> {
 
     default List<Demo03CourseDO> selectListByStudentId(Long studentId) {
         return selectList(Demo03CourseDO::getStudentId, studentId);
     }
 
-    default int deleteByStudentId(Long studentId) {
+    default long deleteByStudentId(Long studentId) {
         return delete(Demo03CourseDO::getStudentId, studentId);
     }
 
-    default int deleteByStudentIds(List<Long> studentIds) {
+    default long deleteByStudentIds(List<Long> studentIds) {
         return deleteBatch(Demo03CourseDO::getStudentId, studentIds);
     }
 
