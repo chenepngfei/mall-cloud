@@ -9,7 +9,6 @@ import cn.afei.mall.framework.security.core.util.SecurityFrameworkUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -43,21 +42,55 @@ public class MallJpaAutoConfiguration {
     }
 
     /**
-     * 禁止 Spring 把只读事务标志下发到 JDBC 连接（prepareConnection=false）。
-     *
-     * 原因：MySQL 驱动的 readOnly 只是提示、不强制；PostgreSQL 会真正以
-     * "BEGIN READ ONLY" 开启事务并拒绝写入。dynamic-datasource 与 Spring 各自
-     * 管理一份连接包装，事务异常回滚后池中连接的 readOnly 标志可能不被复位，
-     * 导致后续借到该连接的写操作报 "cannot execute INSERT in a read-only transaction"。
-     * 只读语义仍由 Hibernate 的 FlushMode.MANUAL 保证，不丢失。
+     * 【临时诊断】通过 -Dmall.jpa.readOnlyDiagnostic=true 激活，包装 DataSource
+     * 打印所有 Connection.setReadOnly 调用栈。问题定位后删除。
      */
     @Bean
-    public TransactionManagerCustomizer<JpaTransactionManager> jpaTransactionManagerCustomizer() {
-        return transactionManager -> {
-            if (transactionManager.getJpaDialect() instanceof HibernateJpaDialect hibernateDialect) {
-                hibernateDialect.setPrepareConnection(false);
+    public static org.springframework.beans.factory.config.BeanPostProcessor readOnlyDiagnosticBpp() {
+        return new org.springframework.beans.factory.config.BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) {
+                if (Boolean.getBoolean("mall.jpa.readOnlyDiagnostic")
+                        && bean instanceof JpaTransactionManager) {
+                    System.out.println("[READONLY-DIAG] TM bean '" + beanName + "' -> " + bean
+                            + " dialect=" + ((JpaTransactionManager) bean).getJpaDialect());
+                }
+                if (Boolean.getBoolean("mall.jpa.readOnlyDiagnostic")
+                        && bean instanceof javax.sql.DataSource ds
+                        && !beanName.contains("readOnlyDiagnostic")) {
+                    System.out.println("[READONLY-DIAG] wrapping DataSource bean: " + beanName);
+                    return new ReadOnlyDiagnosticDataSource(ds);
+                }
+                return bean;
             }
         };
+    }
+
+    /**
+     * 自定义 JPA 事务管理器：HibernateJpaDialect.setPrepareConnection(false)，
+     * 禁止 Spring 把只读事务标志下发到 JDBC 连接。
+     *
+     * 原因：PgJDBC 的 setReadOnly(true) 在 autocommit 下执行的是会话级的
+     * "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"，连接回池后若未复位，
+     * 该连接上的所有后续写操作都会报 "cannot execute INSERT in a read-only transaction"。
+     * MySQL 驱动的 readOnly 只是提示，因此 MP 时代无感。只读语义仍由
+     * Hibernate 的 FlushMode.MANUAL 保证，不丢失。
+     *
+     * 注意：不能通过 TransactionManagerCustomizer 实现——Boot 自动装配的
+     * JpaTransactionManager 与 Spring Data 实际使用的事务管理器可能不是同一实例。
+     */
+    @Bean
+    public JpaTransactionManager transactionManager(jakarta.persistence.EntityManagerFactory entityManagerFactory) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager(entityManagerFactory);
+        HibernateJpaDialect jpaDialect = new HibernateJpaDialect() {
+            @Override
+            public String toString() {
+                return "MallHibernateJpaDialect(prepareConnection=false)";
+            }
+        };
+        jpaDialect.setPrepareConnection(false);
+        transactionManager.setJpaDialect(jpaDialect);
+        return transactionManager;
     }
 
     /**
