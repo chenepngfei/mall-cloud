@@ -15,6 +15,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 在 Spring Data JPA 的 JpaRepository 的基础上拓展，提供更多的能力，对齐原 MyBatis Plus 的 {@code BaseMapperX}
+ *
+ * 1. {@link JpaRepository} 提供基础的 CRUD 能力
+ * 2. {@link JpaSpecificationExecutor} 提供基于 {@link Specification} 的动态条件查询能力
+ * 3. 方法名尽量与原 {@code BaseMapperX} 保持一致，降低业务模块的迁移成本
+ *
+ * 重要：所有【写】方法必须显式标注 {@code @Transactional}。
+ * 原因：实现类 SimpleJpaRepository 类级别标注了 {@code @Transactional(readOnly = true)}，
+ * 本接口的 default/抽象方法若不标注，事务属性会回退到实现类的只读设置——MySQL（MP 时代）无感，
+ * PostgreSQL 会真正以只读事务执行并拒绝写入。
+ */
 
 import java.util.Collection;
 import java.util.List;
@@ -184,6 +198,7 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
 
     // ========== 插入 ==========
 
+    @Transactional
     default T insert(T entity) {
         return save(entity);
     }
@@ -194,6 +209,7 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
      * @param entities 实体们
      * @return 插入后的实体列表
      */
+    @Transactional
     default List<T> insertBatch(Collection<T> entities) {
         return saveAll(entities);
     }
@@ -210,6 +226,7 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
      * @param entities 携带待更新字段的实体们
      * @return 更新后的实体列表
      */
+    @Transactional
     default List<T> updateBatch(Collection<T> entities) {
         List<T> result = new java.util.ArrayList<>(entities.size());
         entities.forEach(entity -> result.add(updateById(entity)));
@@ -222,6 +239,7 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
      * @param update 携带待更新字段的实体
      * @return 更新的记录数
      */
+    @Transactional
     default long updateBatch(T update) {
         List<T> list = findAll();
         for (T entity : list) {
@@ -241,11 +259,13 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
      * @param entity 携带待更新字段的实体
      * @return 更新后的实体
      */
+    @Transactional
     T updateByIdSelective(T entity);
 
     /**
      * 按 id 选择性更新的别名，对齐 MP 的 updateById 方法名
      */
+    @Transactional
     default T updateById(T entity) {
         return updateByIdSelective(entity);
     }
@@ -253,6 +273,7 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
     /**
      * 插入或更新，等价于 MP 的 {@code insertOrUpdate}：id 为空插入；id 非空时按 id 选择性更新，不存在则插入
      */
+    @Transactional
     T insertOrUpdate(T entity);
 
     // ========== 删除（走软删） ==========
@@ -266,16 +287,19 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
      * @return 删除的记录数
      */
     @Override
+    @Transactional
     default long delete(Specification<T> spec) {
         List<T> list = findAll(spec);
         deleteAll(list);
         return list.size();
     }
 
+    @Transactional
     default long delete(SFunction<T, ?> field, Object value) {
         return delete(LambdaSpecifications.<T>of().eq(field, value).build());
     }
 
+    @Transactional
     default long deleteBatch(SFunction<T, ?> field, Collection<?> values) {
         if (CollUtil.isEmpty(values)) {
             return 0;
@@ -286,6 +310,7 @@ public interface BaseRepositoryX<T, ID> extends JpaRepository<T, ID>, JpaSpecifi
     /**
      * 按主键批量删除（对齐 MP 的 deleteByIds），走软删
      */
+    @Transactional
     default void deleteByIds(Iterable<? extends ID> ids) {
         deleteAllById(ids);
     }

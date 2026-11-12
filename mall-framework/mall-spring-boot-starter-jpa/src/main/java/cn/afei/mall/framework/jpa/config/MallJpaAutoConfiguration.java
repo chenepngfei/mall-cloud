@@ -9,10 +9,13 @@ import cn.afei.mall.framework.security.core.util.SecurityFrameworkUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.vendor.HibernateJpaDialect;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +28,7 @@ import java.util.Optional;
  * 3. 注册 Session 钩子（多租户 Filter）与数据权限钩子（由 biz-tenant、biz-data-permission 提供）
  */
 @AutoConfiguration
-@EnableJpaRepositories(basePackages = "${mall.info.base-package}",
+@EnableJpaRepositories(basePackages = "${mall.info.base-package:cn.afei.mall}",
         repositoryBaseClass = BaseRepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "loginUserAuditorAware")
 public class MallJpaAutoConfiguration {
@@ -37,6 +40,24 @@ public class MallJpaAutoConfiguration {
     public AuditorAware<String> loginUserAuditorAware() {
         return () -> Optional.ofNullable(SecurityFrameworkUtils.getLoginUserId())
                 .map(String::valueOf);
+    }
+
+    /**
+     * 禁止 Spring 把只读事务标志下发到 JDBC 连接（prepareConnection=false）。
+     *
+     * 原因：MySQL 驱动的 readOnly 只是提示、不强制；PostgreSQL 会真正以
+     * "BEGIN READ ONLY" 开启事务并拒绝写入。dynamic-datasource 与 Spring 各自
+     * 管理一份连接包装，事务异常回滚后池中连接的 readOnly 标志可能不被复位，
+     * 导致后续借到该连接的写操作报 "cannot execute INSERT in a read-only transaction"。
+     * 只读语义仍由 Hibernate 的 FlushMode.MANUAL 保证，不丢失。
+     */
+    @Bean
+    public TransactionManagerCustomizer<JpaTransactionManager> jpaTransactionManagerCustomizer() {
+        return transactionManager -> {
+            if (transactionManager.getJpaDialect() instanceof HibernateJpaDialect hibernateDialect) {
+                hibernateDialect.setPrepareConnection(false);
+            }
+        };
     }
 
     /**

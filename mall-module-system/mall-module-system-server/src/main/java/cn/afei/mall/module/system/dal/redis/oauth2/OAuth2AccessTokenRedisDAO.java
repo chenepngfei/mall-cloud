@@ -34,11 +34,19 @@ public class OAuth2AccessTokenRedisDAO {
 
     public void set(OAuth2AccessTokenDO accessTokenDO) {
         String redisKey = formatKey(accessTokenDO.getAccessToken());
-        // 清理多余字段，避免缓存
-        accessTokenDO.setUpdater(null).setUpdateTime(null).setCreateTime(null).setCreator(null).setDeleted(null);
-        long time = LocalDateTimeUtil.between(LocalDateTime.now(), accessTokenDO.getExpiresTime(), ChronoUnit.SECONDS);
+        // 清理多余字段，避免缓存。
+        // 注意：必须在【副本】上清理，不能修改原实体——JPA 下它是持久化上下文中的受管实体，
+        // 直接置空字段会触发 Hibernate 脏检查，commit 时生成全量 UPDATE 把 deleted=null 写库，违反非空约束
+        OAuth2AccessTokenDO cacheDO = new OAuth2AccessTokenDO()
+                .setId(accessTokenDO.getId()).setAccessToken(accessTokenDO.getAccessToken())
+                .setRefreshToken(accessTokenDO.getRefreshToken()).setUserId(accessTokenDO.getUserId())
+                .setUserType(accessTokenDO.getUserType()).setUserInfo(accessTokenDO.getUserInfo())
+                .setClientId(accessTokenDO.getClientId()).setScopes(accessTokenDO.getScopes())
+                .setExpiresTime(accessTokenDO.getExpiresTime());
+        cacheDO.setTenantId(accessTokenDO.getTenantId());
+        long time = LocalDateTimeUtil.between(LocalDateTime.now(), cacheDO.getExpiresTime(), ChronoUnit.SECONDS);
         if (time > 0) {
-            stringRedisTemplate.opsForValue().set(redisKey, JsonUtils.toJsonString(accessTokenDO), time, TimeUnit.SECONDS);
+            stringRedisTemplate.opsForValue().set(redisKey, JsonUtils.toJsonString(cacheDO), time, TimeUnit.SECONDS);
         }
     }
 
