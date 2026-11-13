@@ -7,7 +7,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.dict.vo.type.DictTypePageReqVO;
 import cn.afei.mall.module.system.controller.admin.dict.vo.type.DictTypeSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.dict.DictTypeDO;
-import cn.afei.mall.module.system.dal.mysql.dict.DictTypeMapper;
+import cn.afei.mall.module.system.dal.jpa.dict.DictTypeRepository;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -30,21 +30,21 @@ public class DictTypeServiceImpl implements DictTypeService {
     private DictDataService dictDataService;
 
     @Resource
-    private DictTypeMapper dictTypeMapper;
+    private DictTypeRepository dictTypeRepository;
 
     @Override
     public PageResult<DictTypeDO> getDictTypePage(DictTypePageReqVO pageReqVO) {
-        return dictTypeMapper.selectPage(pageReqVO);
+        return dictTypeRepository.selectPage(pageReqVO);
     }
 
     @Override
     public DictTypeDO getDictType(Long id) {
-        return dictTypeMapper.selectById(id);
+        return dictTypeRepository.selectById(id);
     }
 
     @Override
     public DictTypeDO getDictType(String type) {
-        return dictTypeMapper.selectByType(type);
+        return dictTypeRepository.selectByType(type);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class DictTypeServiceImpl implements DictTypeService {
         // 插入字典类型
         DictTypeDO dictType = BeanUtils.toBean(createReqVO, DictTypeDO.class);
         dictType.setDeletedTime(LocalDateTimeUtils.EMPTY); // 唯一索引，避免 null 值
-        dictTypeMapper.insert(dictType);
+        dictTypeRepository.save(dictType);
         return dictType.getId();
     }
 
@@ -72,7 +72,7 @@ public class DictTypeServiceImpl implements DictTypeService {
 
         // 更新字典类型
         DictTypeDO updateObj = BeanUtils.toBean(updateReqVO, DictTypeDO.class);
-        dictTypeMapper.updateById(updateObj);
+        dictTypeRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -84,13 +84,13 @@ public class DictTypeServiceImpl implements DictTypeService {
             throw exception(DICT_TYPE_HAS_CHILDREN);
         }
         // 删除字典类型
-        dictTypeMapper.updateToDelete(id, LocalDateTime.now());
+        dictTypeRepository.updateToDelete(id, LocalDateTime.now());
     }
 
     @Override
     public void deleteDictTypeList(List<Long> ids) {
         // 1. 校验是否有字典数据
-        List<DictTypeDO> dictTypes = dictTypeMapper.selectByIds(ids);
+        List<DictTypeDO> dictTypes = dictTypeRepository.selectByIds(ids);
         dictTypes.forEach(dictType -> {
             if (dictDataService.getDictDataCountByDictType(dictType.getType()) > 0) {
                 throw exception(DICT_TYPE_HAS_CHILDREN);
@@ -99,17 +99,17 @@ public class DictTypeServiceImpl implements DictTypeService {
 
         // 2. 批量删除字典类型
         LocalDateTime now = LocalDateTime.now();
-        ids.forEach(id -> dictTypeMapper.updateToDelete(id, now));
+        ids.forEach(id -> dictTypeRepository.updateToDelete(id, now));
     }
 
     @Override
     public List<DictTypeDO> getDictTypeList() {
-        return dictTypeMapper.selectList();
+        return dictTypeRepository.selectAll();
     }
 
     @VisibleForTesting
     void validateDictTypeNameUnique(Long id, String name) {
-        DictTypeDO dictType = dictTypeMapper.selectByName(name);
+        DictTypeDO dictType = dictTypeRepository.selectByName(name);
         if (dictType == null) {
             return;
         }
@@ -127,7 +127,7 @@ public class DictTypeServiceImpl implements DictTypeService {
         if (StrUtil.isEmpty(type)) {
             return;
         }
-        DictTypeDO dictType = dictTypeMapper.selectByType(type);
+        DictTypeDO dictType = dictTypeRepository.selectByType(type);
         if (dictType == null) {
             return;
         }
@@ -145,7 +145,7 @@ public class DictTypeServiceImpl implements DictTypeService {
         if (id == null) {
             return null;
         }
-        DictTypeDO dictType = dictTypeMapper.selectById(id);
+        DictTypeDO dictType = dictTypeRepository.selectById(id);
         if (dictType == null) {
             throw exception(DICT_TYPE_NOT_EXISTS);
         }

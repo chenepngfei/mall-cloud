@@ -4,11 +4,13 @@ import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.system.enums.oauth2.OAuth2GrantTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonListStringConverter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,8 +21,8 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_oauth2_client", autoResultMap = true)
-@KeySequence("system_oauth2_client_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_oauth2_client")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TenantIgnore
@@ -31,7 +33,8 @@ public class OAuth2ClientDO extends BaseDO {
      *
      * 由于 SQL Server 在存储 String 主键有点问题，所以暂时使用 Long 类型
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 客户端编号
@@ -70,36 +73,36 @@ public class OAuth2ClientDO extends BaseDO {
     /**
      * 可重定向的 URI 地址
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> redirectUris;
     /**
      * 授权类型（模式）
      *
      * 枚举 {@link OAuth2GrantTypeEnum}
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> authorizedGrantTypes;
     /**
      * 授权范围
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> scopes;
     /**
      * 自动授权的 Scope
      *
      * code 授权时，如果 scope 在这个范围内，则自动通过
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> autoApproveScopes;
     /**
      * 权限
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> authorities;
     /**
      * 资源
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> resourceIds;
     /**
      * 附加信息，JSON 格式

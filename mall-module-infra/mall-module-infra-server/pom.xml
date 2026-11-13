@@ -57,6 +57,20 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId> <!-- 代码生成器，使用它解析表结构 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mybatis</groupId>
+                    <artifactId>mybatis</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-annotation</artifactId> <!-- generator 编译依赖（DbType） -->
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId> <!-- codegen 的 JdbcType -->
         </dependency>
 
         <dependency>
@@ -150,6 +164,10 @@
                         <goals>
                             <goal>repackage</goal> <!-- 将引入的 jar 打入其中 -->
                         </goals>
+                        <configuration>
+                            <!-- 可执行 jar 用 exec classifier，主 jar 保持普通结构：单体 mall-server 嵌入普通 jar 才能被类加载器读取（yudao-cloud 官方做法） -->
+                            <classifier>exec</classifier>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

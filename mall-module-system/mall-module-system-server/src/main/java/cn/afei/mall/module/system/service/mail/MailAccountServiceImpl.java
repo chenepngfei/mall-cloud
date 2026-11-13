@@ -5,7 +5,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.mail.vo.account.MailAccountPageReqVO;
 import cn.afei.mall.module.system.controller.admin.mail.vo.account.MailAccountSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.mail.MailAccountDO;
-import cn.afei.mall.module.system.dal.mysql.mail.MailAccountMapper;
+import cn.afei.mall.module.system.dal.jpa.mail.MailAccountRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import static cn.afei.mall.module.system.enums.ErrorCodeConstants.MAIL_ACCOUNT_R
 public class MailAccountServiceImpl implements MailAccountService {
 
     @Resource
-    private MailAccountMapper mailAccountMapper;
+    private MailAccountRepository mailAccountRepository;
 
     @Resource
     private MailTemplateService mailTemplateService;
@@ -40,7 +40,7 @@ public class MailAccountServiceImpl implements MailAccountService {
     @Override
     public Long createMailAccount(MailAccountSaveReqVO createReqVO) {
         MailAccountDO account = BeanUtils.toBean(createReqVO, MailAccountDO.class);
-        mailAccountMapper.insert(account);
+        mailAccountRepository.save(account);
         return account.getId();
     }
 
@@ -52,7 +52,7 @@ public class MailAccountServiceImpl implements MailAccountService {
 
         // 更新
         MailAccountDO updateObj = BeanUtils.toBean(updateReqVO, MailAccountDO.class);
-        mailAccountMapper.updateById(updateObj);
+        mailAccountRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class MailAccountServiceImpl implements MailAccountService {
         }
 
         // 删除
-        mailAccountMapper.deleteById(id);
+        mailAccountRepository.deleteByIdLogically(id);
     }
 
     @Override
@@ -81,18 +81,18 @@ public class MailAccountServiceImpl implements MailAccountService {
         }
 
         // 2. 批量删除
-        mailAccountMapper.deleteByIds(ids);
+        mailAccountRepository.deleteBatchIdsLogically(ids);
     }
 
     private void validateMailAccountExists(Long id) {
-        if (mailAccountMapper.selectById(id) == null) {
+        if (mailAccountRepository.selectById(id) == null) {
             throw exception(MAIL_ACCOUNT_NOT_EXISTS);
         }
     }
 
     @Override
     public MailAccountDO getMailAccount(Long id) {
-        return mailAccountMapper.selectById(id);
+        return mailAccountRepository.selectById(id);
     }
 
     @Override
@@ -103,12 +103,12 @@ public class MailAccountServiceImpl implements MailAccountService {
 
     @Override
     public PageResult<MailAccountDO> getMailAccountPage(MailAccountPageReqVO pageReqVO) {
-        return mailAccountMapper.selectPage(pageReqVO);
+        return mailAccountRepository.selectPage(pageReqVO);
     }
 
     @Override
     public List<MailAccountDO> getMailAccountList() {
-        return mailAccountMapper.selectList();
+        return mailAccountRepository.selectAll();
     }
 
 }

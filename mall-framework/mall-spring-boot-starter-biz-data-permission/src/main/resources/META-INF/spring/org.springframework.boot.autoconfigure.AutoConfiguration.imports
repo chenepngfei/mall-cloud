@@ -1,3 +1,2 @@
 cn.afei.mall.framework.datapermission.config.MallDataPermissionAutoConfiguration
-cn.afei.mall.framework.datapermission.config.MallDeptDataPermissionAutoConfiguration
 cn.afei.mall.framework.datapermission.config.MallDataPermissionRpcAutoConfiguration

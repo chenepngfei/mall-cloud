@@ -8,7 +8,7 @@ import cn.afei.mall.framework.tenant.core.context.TenantContextHolder;
 import cn.afei.mall.framework.tenant.core.util.TenantUtils;
 import cn.afei.mall.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.logger.ApiErrorLogDO;
-import cn.afei.mall.module.infra.dal.mysql.logger.ApiErrorLogMapper;
+import cn.afei.mall.module.infra.dal.jpa.logger.ApiErrorLogRepository;
 import cn.afei.mall.module.infra.enums.logger.ApiErrorLogProcessStatusEnum;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_P
 public class ApiErrorLogServiceImpl implements ApiErrorLogService {
 
     @Resource
-    private ApiErrorLogMapper apiErrorLogMapper;
+    private ApiErrorLogRepository apiErrorLogRepository;
 
     @Override
     public void createApiErrorLog(ApiErrorLogCreateReqDTO createDTO) {
@@ -42,10 +42,10 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
         apiErrorLog.setRequestParams(StrUtils.maxLength(apiErrorLog.getRequestParams(), REQUEST_PARAMS_MAX_LENGTH));
         try {
             if (TenantContextHolder.getTenantId() != null) {
-                apiErrorLogMapper.insert(apiErrorLog);
+                apiErrorLogRepository.save(apiErrorLog);
             } else {
                 // 极端情况下，上下文中没有租户时，此时忽略租户上下文，避免插入失败！
-                TenantUtils.executeIgnore(() -> apiErrorLogMapper.insert(apiErrorLog));
+                TenantUtils.executeIgnore(() -> apiErrorLogRepository.save(apiErrorLog));
             }
         } catch (Exception ex) {
             // 兜底处理，目前只有 mall-cloud 会发生：https://gitee.com/mallcode/mall-cloud-mini/issues/IC1O0A
@@ -55,17 +55,17 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
 
     @Override
     public PageResult<ApiErrorLogDO> getApiErrorLogPage(ApiErrorLogPageReqVO pageReqVO) {
-        return apiErrorLogMapper.selectPage(pageReqVO);
+        return apiErrorLogRepository.selectPage(pageReqVO);
     }
 
     @Override
     public ApiErrorLogDO getApiErrorLog(Long id) {
-        return apiErrorLogMapper.selectById(id);
+        return apiErrorLogRepository.selectById(id);
     }
 
     @Override
     public void updateApiErrorLogProcess(Long id, Integer processStatus, Long processUserId) {
-        ApiErrorLogDO errorLog = apiErrorLogMapper.selectById(id);
+        ApiErrorLogDO errorLog = apiErrorLogRepository.selectById(id);
         if (errorLog == null) {
             throw exception(API_ERROR_LOG_NOT_FOUND);
         }
@@ -73,7 +73,7 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
             throw exception(API_ERROR_LOG_PROCESSED);
         }
         // 标记处理
-        apiErrorLogMapper.updateById(ApiErrorLogDO.builder().id(id).processStatus(processStatus)
+        apiErrorLogRepository.updateByIdSelective(ApiErrorLogDO.builder().id(id).processStatus(processStatus)
                 .processUserId(processUserId).processTime(LocalDateTime.now()).build());
     }
 
@@ -84,7 +84,7 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
         LocalDateTime expireDate = LocalDateTime.now().minusDays(exceedDay);
         // 循环删除，直到没有满足条件的数据
         for (int i = 0; i < Short.MAX_VALUE; i++) {
-            int deleteCount = apiErrorLogMapper.deleteByCreateTimeLt(expireDate, deleteLimit);
+            int deleteCount = apiErrorLogRepository.deleteBatchByLessThanCreateTime(expireDate, deleteLimit);
             count += deleteCount;
             // 达到删除预期条数，说明到底了
             if (deleteCount < deleteLimit) {

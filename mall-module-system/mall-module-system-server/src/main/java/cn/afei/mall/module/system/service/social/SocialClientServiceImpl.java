@@ -30,7 +30,7 @@ import cn.afei.mall.module.system.api.social.dto.SocialWxaSubscribeMessageSendRe
 import cn.afei.mall.module.system.controller.admin.social.vo.client.SocialClientPageReqVO;
 import cn.afei.mall.module.system.controller.admin.social.vo.client.SocialClientSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.social.SocialClientDO;
-import cn.afei.mall.module.system.dal.mysql.social.SocialClientMapper;
+import cn.afei.mall.module.system.dal.jpa.social.SocialClientRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import cn.afei.mall.module.system.enums.social.SocialTypeEnum;
 import cn.afei.mall.module.system.framework.justauth.core.AuthRequestFactory;
@@ -165,7 +165,7 @@ public class SocialClientServiceImpl implements SocialClientService {
             });
 
     @Resource
-    private SocialClientMapper socialClientMapper;
+    private SocialClientRepository socialClientRepository;
 
     @Override
     public String getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {
@@ -209,7 +209,7 @@ public class SocialClientServiceImpl implements SocialClientService {
         AuthRequest request = authRequestFactory.get(SocialTypeEnum.valueOfType(socialType).getSource());
         Assert.notNull(request, String.format("社交平台(%d) 不存在", socialType));
         // 2. 查询 DB 的配置项，如果存在则进行覆盖
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(socialType, userType);
+        SocialClientDO client = socialClientRepository.selectBySocialTypeAndUserType(socialType, userType);
         if (client != null && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
             // 2.1 构造新的 AuthConfig 对象
             AuthConfig authConfig = (AuthConfig) ReflectUtil.getFieldValue(request, "config");
@@ -249,7 +249,7 @@ public class SocialClientServiceImpl implements SocialClientService {
     @VisibleForTesting
     WxMpService getWxMpService(Integer userType) {
         // 第一步，查询 DB 的配置项，获得对应的 WxMpService 对象
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
+        SocialClientDO client = socialClientRepository.selectBySocialTypeAndUserType(
                 SocialTypeEnum.WECHAT_MP.getType(), userType);
         if (client != null && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
             return wxMpServiceCache.getUnchecked(client.getClientId() + ":" + client.getClientSecret());
@@ -436,7 +436,7 @@ public class SocialClientServiceImpl implements SocialClientService {
     @VisibleForTesting
     WxMaService getWxMaService(Integer userType) {
         // 第一步，查询 DB 的配置项，获得对应的 WxMaService 对象
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
+        SocialClientDO client = socialClientRepository.selectBySocialTypeAndUserType(
                 SocialTypeEnum.WECHAT_MINI_PROGRAM.getType(), userType);
         if (client != null && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
             return wxMaServiceCache.getUnchecked(client.getClientId() + ":" + client.getClientSecret());
@@ -475,7 +475,7 @@ public class SocialClientServiceImpl implements SocialClientService {
 
         // 插入
         SocialClientDO client = BeanUtils.toBean(createReqVO, SocialClientDO.class);
-        socialClientMapper.insert(client);
+        socialClientRepository.save(client);
         return client.getId();
     }
 
@@ -488,7 +488,7 @@ public class SocialClientServiceImpl implements SocialClientService {
 
         // 更新
         SocialClientDO updateObj = BeanUtils.toBean(updateReqVO, SocialClientDO.class);
-        socialClientMapper.updateById(updateObj);
+        socialClientRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -496,16 +496,16 @@ public class SocialClientServiceImpl implements SocialClientService {
         // 校验存在
         validateSocialClientExists(id);
         // 删除
-        socialClientMapper.deleteById(id);
+        socialClientRepository.deleteByIdLogically(id);
     }
 
     @Override
     public void deleteSocialClientList(List<Long> ids) {
-        socialClientMapper.deleteByIds(ids);
+        socialClientRepository.deleteBatchIdsLogically(ids);
     }
 
     private void validateSocialClientExists(Long id) {
-        if (socialClientMapper.selectById(id) == null) {
+        if (socialClientRepository.selectById(id) == null) {
             throw exception(SOCIAL_CLIENT_NOT_EXISTS);
         }
     }
@@ -519,7 +519,7 @@ public class SocialClientServiceImpl implements SocialClientService {
      * @param socialType 社交类型
      */
     private void validateSocialClientUnique(Long id, Integer userType, Integer socialType) {
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
+        SocialClientDO client = socialClientRepository.selectBySocialTypeAndUserType(
                 socialType, userType);
         if (client == null) {
             return;
@@ -532,12 +532,12 @@ public class SocialClientServiceImpl implements SocialClientService {
 
     @Override
     public SocialClientDO getSocialClient(Long id) {
-        return socialClientMapper.selectById(id);
+        return socialClientRepository.selectById(id);
     }
 
     @Override
     public PageResult<SocialClientDO> getSocialClientPage(SocialClientPageReqVO pageReqVO) {
-        return socialClientMapper.selectPage(pageReqVO);
+        return socialClientRepository.selectPage(pageReqVO);
     }
 
 }

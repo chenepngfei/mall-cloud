@@ -9,9 +9,9 @@ import cn.afei.mall.module.infra.controller.admin.demo.demo03.inner.vo.Demo03Stu
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03CourseInnerMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03GradeInnerMapper;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo03.inner.Demo03StudentInnerMapper;
+import cn.afei.mall.module.infra.dal.jpa.demo.Demo03CourseRepository;
+import cn.afei.mall.module.infra.dal.jpa.demo.Demo03GradeRepository;
+import cn.afei.mall.module.infra.dal.jpa.demo.Demo03StudentRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,18 +34,18 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DEMO03_STUDENT_
 public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService {
 
     @Resource
-    private Demo03StudentInnerMapper demo03StudentInnerMapper;
+    private Demo03StudentRepository demo03StudentInnerRepository;
     @Resource
-    private Demo03CourseInnerMapper demo03CourseInnerMapper;
+    private Demo03CourseRepository demo03CourseInnerRepository;
     @Resource
-    private Demo03GradeInnerMapper demo03GradeInnerMapper;
+    private Demo03GradeRepository demo03GradeInnerRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createDemo03Student(Demo03StudentInnerSaveReqVO createReqVO) {
         // 插入
         Demo03StudentDO demo03Student = BeanUtils.toBean(createReqVO, Demo03StudentDO.class);
-        demo03StudentInnerMapper.insert(demo03Student);
+        demo03StudentInnerRepository.save(demo03Student);
 
         // 插入子表
         createDemo03CourseList(demo03Student.getId(), createReqVO.getDemo03Courses());
@@ -61,7 +61,7 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
         validateDemo03StudentExists(updateReqVO.getId());
         // 更新
         Demo03StudentDO updateObj = BeanUtils.toBean(updateReqVO, Demo03StudentDO.class);
-        demo03StudentInnerMapper.updateById(updateObj);
+        demo03StudentInnerRepository.updateByIdSelective(updateObj);
 
         // 更新子表
         updateDemo03CourseList(updateReqVO.getId(), updateReqVO.getDemo03Courses());
@@ -74,7 +74,7 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
         // 校验存在
         validateDemo03StudentExists(id);
         // 删除
-        demo03StudentInnerMapper.deleteById(id);
+        demo03StudentInnerRepository.deleteByIdLogically(id);
 
         // 删除子表
         deleteDemo03CourseByStudentId(id);
@@ -87,7 +87,7 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
         // 校验存在
         validateDemo03StudentExists(ids);
         // 删除
-        demo03StudentInnerMapper.deleteByIds(ids);
+        demo03StudentInnerRepository.deleteBatchIdsLogically(ids);
 
         // 删除子表
         deleteDemo03CourseByStudentIds(ids);
@@ -95,43 +95,43 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
     }
 
     private void validateDemo03StudentExists(List<Long> ids) {
-        List<Demo03StudentDO> list = demo03StudentInnerMapper.selectByIds(ids);
+        List<Demo03StudentDO> list = demo03StudentInnerRepository.selectByIds(ids);
         if (CollUtil.isEmpty(list) || list.size() != ids.size()) {
             throw exception(DEMO03_STUDENT_NOT_EXISTS);
         }
     }
 
     private void validateDemo03StudentExists(Long id) {
-        if (demo03StudentInnerMapper.selectById(id) == null) {
+        if (demo03StudentInnerRepository.selectById(id) == null) {
             throw exception(DEMO03_STUDENT_NOT_EXISTS);
         }
     }
 
     @Override
     public Demo03StudentDO getDemo03Student(Long id) {
-        return demo03StudentInnerMapper.selectById(id);
+        return demo03StudentInnerRepository.selectById(id);
     }
 
     @Override
     public PageResult<Demo03StudentDO> getDemo03StudentPage(Demo03StudentInnerPageReqVO pageReqVO) {
-        return demo03StudentInnerMapper.selectPage(pageReqVO);
+        return demo03StudentInnerRepository.selectPage(pageReqVO);
     }
 
     // ==================== 子表（学生课程） ====================
 
     @Override
     public List<Demo03CourseDO> getDemo03CourseListByStudentId(Long studentId) {
-        return demo03CourseInnerMapper.selectListByStudentId(studentId);
+        return demo03CourseInnerRepository.selectListByStudentId(studentId);
     }
 
     private void createDemo03CourseList(Long studentId, List<Demo03CourseDO> list) {
         list.forEach(o -> o.setStudentId(studentId).clean());
-        demo03CourseInnerMapper.insertBatch(list);
+        demo03CourseInnerRepository.saveAll(list);
     }
 
     private void updateDemo03CourseList(Long studentId, List<Demo03CourseDO> list) {
         list.forEach(o -> o.setStudentId(studentId).clean());
-        List<Demo03CourseDO> oldList = demo03CourseInnerMapper.selectListByStudentId(studentId);
+        List<Demo03CourseDO> oldList = demo03CourseInnerRepository.selectListByStudentId(studentId);
         List<List<Demo03CourseDO>> diffList = diffList(oldList, list, (oldVal, newVal) -> {
             boolean same = ObjectUtil.equal(oldVal.getId(), newVal.getId());
             if (same) {
@@ -142,29 +142,29 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(0))) {
-            demo03CourseInnerMapper.insertBatch(diffList.get(0));
+            demo03CourseInnerRepository.saveAll(diffList.get(0));
         }
         if (CollUtil.isNotEmpty(diffList.get(1))) {
-            demo03CourseInnerMapper.updateBatch(diffList.get(1));
+            demo03CourseInnerRepository.updateBatchSelective(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            demo03CourseInnerMapper.deleteByIds(convertList(diffList.get(2), Demo03CourseDO::getId));
+            demo03CourseInnerRepository.deleteBatchIdsLogically(convertList(diffList.get(2), Demo03CourseDO::getId));
         }
     }
 
     private void deleteDemo03CourseByStudentId(Long studentId) {
-        demo03CourseInnerMapper.deleteByStudentId(studentId);
+        demo03CourseInnerRepository.deleteByStudentId(studentId);
     }
 
     private void deleteDemo03CourseByStudentIds(List<Long> studentIds) {
-        demo03CourseInnerMapper.deleteByStudentIds(studentIds);
+        demo03CourseInnerRepository.deleteByStudentIds(studentIds);
     }
 
     // ==================== 子表（学生班级） ====================
 
     @Override
     public Demo03GradeDO getDemo03GradeByStudentId(Long studentId) {
-        return demo03GradeInnerMapper.selectByStudentId(studentId);
+        return demo03GradeInnerRepository.selectByStudentId(studentId);
     }
 
     private void createDemo03Grade(Long studentId, Demo03GradeDO demo03Grade) {
@@ -172,7 +172,7 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
             return;
         }
         demo03Grade.setStudentId(studentId);
-        demo03GradeInnerMapper.insert(demo03Grade);
+        demo03GradeInnerRepository.save(demo03Grade);
     }
 
     private void updateDemo03Grade(Long studentId, Demo03GradeDO demo03Grade) {
@@ -180,15 +180,15 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
             return;
         }
         demo03Grade.setStudentId(studentId).clean();
-        demo03GradeInnerMapper.insertOrUpdate(demo03Grade);
+        demo03GradeInnerRepository.save(demo03Grade);
     }
 
     private void deleteDemo03GradeByStudentId(Long studentId) {
-        demo03GradeInnerMapper.deleteByStudentId(studentId);
+        demo03GradeInnerRepository.deleteByStudentId(studentId);
     }
 
     private void deleteDemo03GradeByStudentIds(List<Long> studentIds) {
-        demo03GradeInnerMapper.deleteByStudentIds(studentIds);
+        demo03GradeInnerRepository.deleteByStudentIds(studentIds);
     }
 
 }

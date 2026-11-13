@@ -7,7 +7,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.notify.vo.template.NotifyTemplatePageReqVO;
 import cn.afei.mall.module.system.controller.admin.notify.vo.template.NotifyTemplateSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.notify.NotifyTemplateDO;
-import cn.afei.mall.module.system.dal.mysql.notify.NotifyTemplateMapper;
+import cn.afei.mall.module.system.dal.jpa.notify.NotifyTemplateRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
@@ -41,7 +41,7 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
     @Resource
-    private NotifyTemplateMapper notifyTemplateMapper;
+    private NotifyTemplateRepository notifyTemplateRepository;
 
     @Override
     public Long createNotifyTemplate(NotifyTemplateSaveReqVO createReqVO) {
@@ -51,7 +51,7 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
         // 插入
         NotifyTemplateDO notifyTemplate = BeanUtils.toBean(createReqVO, NotifyTemplateDO.class);
         notifyTemplate.setParams(parseTemplateContentParams(notifyTemplate.getContent()));
-        notifyTemplateMapper.insert(notifyTemplate);
+        notifyTemplateRepository.save(notifyTemplate);
         return notifyTemplate.getId();
     }
 
@@ -67,7 +67,7 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
         // 更新
         NotifyTemplateDO updateObj = BeanUtils.toBean(updateReqVO, NotifyTemplateDO.class);
         updateObj.setParams(parseTemplateContentParams(updateObj.getContent()));
-        notifyTemplateMapper.updateById(updateObj);
+        notifyTemplateRepository.updateByIdSelective(updateObj);
     }
 
     @VisibleForTesting
@@ -82,47 +82,47 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
         // 校验存在
         validateNotifyTemplateExists(id);
         // 删除
-        notifyTemplateMapper.deleteById(id);
+        notifyTemplateRepository.deleteByIdLogically(id);
     }
 
     @Override
     @CacheEvict(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteNotifyTemplateList(List<Long> ids) {
-        notifyTemplateMapper.deleteByIds(ids);
+        notifyTemplateRepository.deleteBatchIdsLogically(ids);
     }
 
     private void validateNotifyTemplateExists(Long id) {
-        if (notifyTemplateMapper.selectById(id) == null) {
+        if (notifyTemplateRepository.selectById(id) == null) {
             throw exception(NOTIFY_TEMPLATE_NOT_EXISTS);
         }
     }
 
     @Override
     public NotifyTemplateDO getNotifyTemplate(Long id) {
-        return notifyTemplateMapper.selectById(id);
+        return notifyTemplateRepository.selectById(id);
     }
 
     @Override
     @Cacheable(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE, key = "#code",
             unless = "#result == null")
     public NotifyTemplateDO getNotifyTemplateByCodeFromCache(String code) {
-        return notifyTemplateMapper.selectByCode(code);
+        return notifyTemplateRepository.selectByCode(code);
     }
 
     @Override
     public PageResult<NotifyTemplateDO> getNotifyTemplatePage(NotifyTemplatePageReqVO pageReqVO) {
-        return notifyTemplateMapper.selectPage(pageReqVO);
+        return notifyTemplateRepository.selectPage(pageReqVO);
     }
 
     @Override
     public List<NotifyTemplateDO> getNotifyTemplateListByStatus(Integer status) {
-        return notifyTemplateMapper.selectListByStatus(status);
+        return notifyTemplateRepository.selectListByStatus(status);
     }
 
     @VisibleForTesting
     void validateNotifyTemplateCodeDuplicate(Long id, String code) {
-        NotifyTemplateDO template = notifyTemplateMapper.selectByCode(code);
+        NotifyTemplateDO template = notifyTemplateRepository.selectByCode(code);
         if (template == null) {
             return;
         }

@@ -20,7 +20,7 @@ import cn.afei.mall.module.system.dal.dataobject.permission.MenuDO;
 import cn.afei.mall.module.system.dal.dataobject.permission.RoleDO;
 import cn.afei.mall.module.system.dal.dataobject.tenant.TenantDO;
 import cn.afei.mall.module.system.dal.dataobject.tenant.TenantPackageDO;
-import cn.afei.mall.module.system.dal.mysql.tenant.TenantMapper;
+import cn.afei.mall.module.system.dal.jpa.tenant.TenantRepository;
 import cn.afei.mall.module.system.enums.permission.RoleCodeEnum;
 import cn.afei.mall.module.system.enums.permission.RoleTypeEnum;
 import cn.afei.mall.module.system.service.permission.MenuService;
@@ -29,7 +29,7 @@ import cn.afei.mall.module.system.service.permission.RoleService;
 import cn.afei.mall.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.afei.mall.module.system.service.tenant.handler.TenantMenuHandler;
 import cn.afei.mall.module.system.service.user.AdminUserService;
-import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +60,7 @@ public class TenantServiceImpl implements TenantService {
     private TenantProperties tenantProperties;
 
     @Resource
-    private TenantMapper tenantMapper;
+    private TenantRepository tenantRepository;
 
     @Resource
     private TenantPackageService tenantPackageService;
@@ -76,7 +76,7 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     public List<Long> getTenantIdList() {
-        List<TenantDO> tenants = tenantMapper.selectList();
+        List<TenantDO> tenants = tenantRepository.selectAll();
         return CollectionUtils.convertList(tenants, TenantDO::getId);
     }
 
@@ -95,7 +95,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     @Override
-    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
+    @Transactional(rollbackFor = Exception.class) // 原 @DSTransactional（多数据源事务），单库下等价本地事务
     @DataPermission(enable = false) // 参见 https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1154 说明
     public Long createTenant(TenantSaveReqVO createReqVO) {
         // 校验租户名称是否重复
@@ -107,7 +107,7 @@ public class TenantServiceImpl implements TenantService {
 
         // 创建租户
         TenantDO tenant = BeanUtils.toBean(createReqVO, TenantDO.class);
-        tenantMapper.insert(tenant);
+        tenantRepository.save(tenant);
         // 创建租户的管理员
         TenantUtils.execute(tenant.getId(), () -> {
             // 创建角色
@@ -115,7 +115,7 @@ public class TenantServiceImpl implements TenantService {
             // 创建用户，并分配角色
             Long userId = createUser(roleId, createReqVO);
             // 修改租户的管理员
-            tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
+            tenantRepository.updateByIdSelective(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
         });
         return tenant.getId();
     }
@@ -140,7 +140,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     @Override
-    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
+    @Transactional(rollbackFor = Exception.class) // 原 @DSTransactional（多数据源事务），单库下等价本地事务
     public void updateTenant(TenantSaveReqVO updateReqVO) {
         // 校验存在
         TenantDO tenant = validateUpdateTenant(updateReqVO.getId());
@@ -153,7 +153,7 @@ public class TenantServiceImpl implements TenantService {
 
         // 更新租户
         TenantDO updateObj = BeanUtils.toBean(updateReqVO, TenantDO.class);
-        tenantMapper.updateById(updateObj);
+        tenantRepository.updateByIdSelective(updateObj);
         // 如果套餐发生变化，则修改其角色的权限
         if (ObjectUtil.notEqual(tenant.getPackageId(), updateReqVO.getPackageId())) {
             updateTenantRoleMenu(tenant.getId(), tenantPackage.getMenuIds());
@@ -161,7 +161,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     private void validTenantNameDuplicate(String name, Long id) {
-        TenantDO tenant = tenantMapper.selectByName(name);
+        TenantDO tenant = tenantRepository.selectByName(name);
         if (tenant == null) {
             return;
         }
@@ -179,7 +179,7 @@ public class TenantServiceImpl implements TenantService {
             return;
         }
         websites.forEach(website -> {
-            List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
+            List<TenantDO> tenants = tenantRepository.selectListByWebsite(website);
             if (excludeId != null) {
                 tenants.removeIf(tenant -> tenant.getId().equals(excludeId));
             }
@@ -190,7 +190,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     @Override
-    @DSTransactional
+    @Transactional(rollbackFor = Exception.class) // 原 @DSTransactional（多数据源事务），单库下等价本地事务
     public void updateTenantRoleMenu(Long tenantId, Set<Long> menuIds) {
         TenantUtils.execute(tenantId, () -> {
             // 获得所有角色
@@ -219,7 +219,7 @@ public class TenantServiceImpl implements TenantService {
         // 校验存在
         validateUpdateTenant(id);
         // 删除
-        tenantMapper.deleteById(id);
+        tenantRepository.deleteByIdLogically(id);
     }
 
     @Override
@@ -228,11 +228,11 @@ public class TenantServiceImpl implements TenantService {
         ids.forEach(this::validateUpdateTenant);
 
         // 2. 批量删除
-        tenantMapper.deleteByIds(ids);
+        tenantRepository.deleteBatchIdsLogically(ids);
     }
 
     private TenantDO validateUpdateTenant(Long id) {
-        TenantDO tenant = tenantMapper.selectById(id);
+        TenantDO tenant = tenantRepository.selectById(id);
         if (tenant == null) {
             throw exception(TENANT_NOT_EXISTS);
         }
@@ -245,38 +245,38 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     public TenantDO getTenant(Long id) {
-        return tenantMapper.selectById(id);
+        return tenantRepository.selectById(id);
     }
 
     @Override
     public PageResult<TenantDO> getTenantPage(TenantPageReqVO pageReqVO) {
-        return tenantMapper.selectPage(pageReqVO);
+        return tenantRepository.selectPage(pageReqVO);
     }
 
     @Override
     public TenantDO getTenantByName(String name) {
-        return tenantMapper.selectByName(name);
+        return tenantRepository.selectByName(name);
     }
 
     @Override
     public TenantDO getTenantByWebsite(String website) {
-        List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
+        List<TenantDO> tenants = tenantRepository.selectListByWebsite(website);
         return CollUtil.getFirst(tenants);
     }
 
     @Override
     public Long getTenantCountByPackageId(Long packageId) {
-        return tenantMapper.selectCountByPackageId(packageId);
+        return tenantRepository.selectCountByPackageId(packageId);
     }
 
     @Override
     public List<TenantDO> getTenantListByPackageId(Long packageId) {
-        return tenantMapper.selectListByPackageId(packageId);
+        return tenantRepository.selectListByPackageId(packageId);
     }
 
     @Override
     public List<TenantDO> getTenantListByStatus(Integer status) {
-        return tenantMapper.selectListByStatus(status);
+        return tenantRepository.selectListByStatus(status);
     }
 
     @Override

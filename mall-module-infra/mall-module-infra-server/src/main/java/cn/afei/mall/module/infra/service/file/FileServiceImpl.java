@@ -15,7 +15,7 @@ import cn.afei.mall.module.infra.controller.admin.file.vo.file.FileCreateReqVO;
 import cn.afei.mall.module.infra.controller.admin.file.vo.file.FilePageReqVO;
 import cn.afei.mall.module.infra.controller.admin.file.vo.file.FilePresignedUrlRespVO;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileDO;
-import cn.afei.mall.module.infra.dal.mysql.file.FileMapper;
+import cn.afei.mall.module.infra.dal.jpa.file.FileRepository;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClient;
 import cn.afei.mall.module.infra.framework.file.core.utils.FilePathUtils;
 import cn.afei.mall.module.infra.framework.file.core.utils.FileTypeUtils;
@@ -97,11 +97,11 @@ public class FileServiceImpl implements FileService {
     private FileConfigService fileConfigService;
 
     @Resource
-    private FileMapper fileMapper;
+    private FileRepository fileRepository;
 
     @Override
     public PageResult<FileDO> getFilePage(FilePageReqVO pageReqVO) {
-        return fileMapper.selectPage(pageReqVO);
+        return fileRepository.selectPage(pageReqVO);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class FileServiceImpl implements FileService {
         String url = client.upload(content, path, type);
 
         // 3. 保存到数据库
-        fileMapper.insert(new FileDO().setConfigId(client.getId())
+        fileRepository.save(new FileDO().setConfigId(client.getId())
                 .setName(name).setPath(path).setUrl(url)
                 .setType(type).setSize((long) content.length));
         return url;
@@ -227,7 +227,7 @@ public class FileServiceImpl implements FileService {
 
         // 2. 保存到数据库
         FileDO file = BeanUtils.toBean(createReqVO, FileDO.class);
-        fileMapper.insert(file);
+        fileRepository.save(file);
         return file.getId();
     }
 
@@ -269,14 +269,14 @@ public class FileServiceImpl implements FileService {
         client.delete(file.getPath());
 
         // 2.2 删除记录
-        fileMapper.deleteById(id);
+        fileRepository.deleteByIdLogically(id);
     }
 
     @Override
     @SneakyThrows
     public void deleteFileList(List<Long> ids) {
         // 删除文件
-        List<FileDO> files = fileMapper.selectByIds(ids);
+        List<FileDO> files = fileRepository.selectByIds(ids);
         for (FileDO file : files) {
             FilePathUtils.validatePath(file.getPath());
             // 获取客户端
@@ -287,11 +287,11 @@ public class FileServiceImpl implements FileService {
         }
 
         // 删除记录
-        fileMapper.deleteByIds(ids);
+        fileRepository.deleteBatchIdsLogically(ids);
     }
 
     private FileDO validateFileExists(Long id) {
-        FileDO fileDO = fileMapper.selectById(id);
+        FileDO fileDO = fileRepository.selectById(id);
         if (fileDO == null) {
             throw exception(FILE_NOT_EXISTS);
         }
@@ -312,7 +312,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileDO getFileByConfigIdAndPath(Long configId, String path) {
-        return fileMapper.selectLatestByConfigIdAndPath(configId, path);
+        return fileRepository.selectLatestByConfigIdAndPath(configId, path);
     }
 
 }

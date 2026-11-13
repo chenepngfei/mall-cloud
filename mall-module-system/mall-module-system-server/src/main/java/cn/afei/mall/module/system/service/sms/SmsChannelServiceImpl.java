@@ -5,7 +5,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.sms.vo.channel.SmsChannelPageReqVO;
 import cn.afei.mall.module.system.controller.admin.sms.vo.channel.SmsChannelSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.sms.SmsChannelDO;
-import cn.afei.mall.module.system.dal.mysql.sms.SmsChannelMapper;
+import cn.afei.mall.module.system.dal.jpa.sms.SmsChannelRepository;
 import cn.afei.mall.module.system.framework.sms.core.client.SmsClient;
 import cn.afei.mall.module.system.framework.sms.core.client.SmsClientFactory;
 import cn.afei.mall.module.system.framework.sms.core.property.SmsChannelProperties;
@@ -32,7 +32,7 @@ public class SmsChannelServiceImpl implements SmsChannelService {
     private SmsClientFactory smsClientFactory;
 
     @Resource
-    private SmsChannelMapper smsChannelMapper;
+    private SmsChannelRepository smsChannelRepository;
 
     @Resource
     private SmsTemplateService smsTemplateService;
@@ -40,7 +40,7 @@ public class SmsChannelServiceImpl implements SmsChannelService {
     @Override
     public Long createSmsChannel(SmsChannelSaveReqVO createReqVO) {
         SmsChannelDO channel = BeanUtils.toBean(createReqVO, SmsChannelDO.class);
-        smsChannelMapper.insert(channel);
+        smsChannelRepository.save(channel);
         return channel.getId();
     }
 
@@ -50,7 +50,7 @@ public class SmsChannelServiceImpl implements SmsChannelService {
         validateSmsChannelExists(updateReqVO.getId());
         // 更新
         SmsChannelDO updateObj = BeanUtils.toBean(updateReqVO, SmsChannelDO.class);
-        smsChannelMapper.updateById(updateObj);
+        smsChannelRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class SmsChannelServiceImpl implements SmsChannelService {
             throw exception(SMS_CHANNEL_HAS_CHILDREN);
         }
         // 删除
-        smsChannelMapper.deleteById(id);
+        smsChannelRepository.deleteByIdLogically(id);
     }
 
     @Override
@@ -75,11 +75,11 @@ public class SmsChannelServiceImpl implements SmsChannelService {
         });
 
         // 2. 批量删除
-        smsChannelMapper.deleteByIds(ids);
+        smsChannelRepository.deleteBatchIdsLogically(ids);
     }
 
     private SmsChannelDO validateSmsChannelExists(Long id) {
-        SmsChannelDO channel = smsChannelMapper.selectById(id);
+        SmsChannelDO channel = smsChannelRepository.selectById(id);
         if (channel == null) {
             throw exception(SMS_CHANNEL_NOT_EXISTS);
         }
@@ -88,22 +88,22 @@ public class SmsChannelServiceImpl implements SmsChannelService {
 
     @Override
     public SmsChannelDO getSmsChannel(Long id) {
-        return smsChannelMapper.selectById(id);
+        return smsChannelRepository.selectById(id);
     }
 
     @Override
     public List<SmsChannelDO> getSmsChannelList() {
-        return smsChannelMapper.selectList();
+        return smsChannelRepository.selectAll();
     }
 
     @Override
     public PageResult<SmsChannelDO> getSmsChannelPage(SmsChannelPageReqVO pageReqVO) {
-        return smsChannelMapper.selectPage(pageReqVO);
+        return smsChannelRepository.selectPage(pageReqVO);
     }
 
     @Override
     public SmsClient getSmsClient(Long id) {
-        SmsChannelDO channel = smsChannelMapper.selectById(id);
+        SmsChannelDO channel = smsChannelRepository.selectById(id);
         SmsChannelProperties properties = BeanUtils.toBean(channel, SmsChannelProperties.class);
         return smsClientFactory.createOrUpdateSmsClient(properties);
     }

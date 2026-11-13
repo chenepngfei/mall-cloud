@@ -3,7 +3,7 @@ package cn.afei.mall.module.infra.service.db;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import cn.afei.mall.framework.mybatis.core.util.JdbcUtils;
+import cn.afei.mall.module.infra.framework.codegen.core.util.JdbcUtils;
 import cn.afei.mall.module.infra.dal.dataobject.db.DataSourceConfigDO;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.generator.config.DataSourceConfig;

@@ -12,7 +12,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.afei.mall.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.permission.RoleDO;
-import cn.afei.mall.module.system.dal.mysql.permission.RoleMapper;
+import cn.afei.mall.module.system.dal.jpa.permission.RoleRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import cn.afei.mall.module.system.enums.permission.DataScopeEnum;
 import cn.afei.mall.module.system.enums.permission.RoleCodeEnum;
@@ -49,7 +49,7 @@ public class RoleServiceImpl implements RoleService {
     private PermissionService permissionService;
 
     @Resource
-    private RoleMapper roleMapper;
+    private RoleRepository roleRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,7 +64,7 @@ public class RoleServiceImpl implements RoleService {
                 .setType(ObjectUtil.defaultIfNull(type, RoleTypeEnum.CUSTOM.getType()))
                 .setStatus(ObjUtil.defaultIfNull(createReqVO.getStatus(), CommonStatusEnum.ENABLE.getStatus()))
                 .setDataScope(DataScopeEnum.ALL.getScope()); // 默认可查看所有数据。原因是，可能一些项目不需要项目权限
-        roleMapper.insert(role);
+        roleRepository.save(role);
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("role", role);
@@ -83,7 +83,7 @@ public class RoleServiceImpl implements RoleService {
 
         // 2. 更新到数据库
         RoleDO updateObj = BeanUtils.toBean(updateReqVO, RoleDO.class);
-        roleMapper.updateById(updateObj);
+        roleRepository.updateByIdSelective(updateObj);
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(role, RoleSaveReqVO.class));
@@ -101,7 +101,7 @@ public class RoleServiceImpl implements RoleService {
         updateObject.setId(id);
         updateObject.setDataScope(dataScope);
         updateObject.setDataScopeDeptIds(dataScopeDeptIds);
-        roleMapper.updateById(updateObject);
+        roleRepository.updateByIdSelective(updateObject);
     }
 
     @Override
@@ -114,7 +114,7 @@ public class RoleServiceImpl implements RoleService {
         RoleDO role = validateRoleForUpdate(id);
 
         // 2.1 标记删除
-        roleMapper.deleteById(id);
+        roleRepository.deleteByIdLogically(id);
         // 2.2 删除相关数据
         permissionService.processRoleDeleted(id);
 
@@ -129,7 +129,7 @@ public class RoleServiceImpl implements RoleService {
         ids.forEach(this::validateRoleForUpdate);
 
         // 2.1 标记删除
-        roleMapper.deleteByIds(ids);
+        roleRepository.deleteBatchIdsLogically(ids);
         // 2.2 删除相关数据
         ids.forEach(id -> permissionService.processRoleDeleted(id));
     }
@@ -151,7 +151,7 @@ public class RoleServiceImpl implements RoleService {
             throw exception(ROLE_ADMIN_CODE_ERROR, code);
         }
         // 1. 该 name 名字被其它角色所使用
-        RoleDO role = roleMapper.selectByName(name);
+        RoleDO role = roleRepository.selectByName(name);
         if (role != null && !role.getId().equals(id)) {
             throw exception(ROLE_NAME_DUPLICATE, name);
         }
@@ -160,7 +160,7 @@ public class RoleServiceImpl implements RoleService {
             return;
         }
         // 该 code 编码被其它角色所使用
-        role = roleMapper.selectByCode(code);
+        role = roleRepository.selectByCode(code);
         if (role != null && !role.getId().equals(id)) {
             throw exception(ROLE_CODE_DUPLICATE, code);
         }
@@ -173,7 +173,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @VisibleForTesting
     RoleDO validateRoleForUpdate(Long id) {
-        RoleDO role = roleMapper.selectById(id);
+        RoleDO role = roleRepository.selectById(id);
         if (role == null) {
             throw exception(ROLE_NOT_EXISTS);
         }
@@ -186,25 +186,25 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleDO getRole(Long id) {
-        return roleMapper.selectById(id);
+        return roleRepository.selectById(id);
     }
 
     @Override
     @Cacheable(value = RedisKeyConstants.ROLE, key = "#id",
             unless = "#result == null")
     public RoleDO getRoleFromCache(Long id) {
-        return roleMapper.selectById(id);
+        return roleRepository.selectById(id);
     }
 
 
     @Override
     public List<RoleDO> getRoleListByStatus(Collection<Integer> statuses) {
-        return roleMapper.selectListByStatus(statuses);
+        return roleRepository.selectListByStatus(statuses);
     }
 
     @Override
     public List<RoleDO> getRoleList() {
-        return roleMapper.selectList();
+        return roleRepository.selectAll();
     }
 
     @Override
@@ -212,7 +212,7 @@ public class RoleServiceImpl implements RoleService {
         if (CollectionUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return roleMapper.selectByIds(ids);
+        return roleRepository.selectByIds(ids);
     }
 
     @Override
@@ -227,7 +227,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public PageResult<RoleDO> getRolePage(RolePageReqVO reqVO) {
-        return roleMapper.selectPage(reqVO);
+        return roleRepository.selectPage(reqVO);
     }
 
     @Override
@@ -248,7 +248,7 @@ public class RoleServiceImpl implements RoleService {
             return;
         }
         // 获得角色信息
-        List<RoleDO> roles = roleMapper.selectByIds(ids);
+        List<RoleDO> roles = roleRepository.selectByIds(ids);
         Map<Long, RoleDO> roleMap = convertMap(roles, RoleDO::getId);
         // 校验
         ids.forEach(id -> {

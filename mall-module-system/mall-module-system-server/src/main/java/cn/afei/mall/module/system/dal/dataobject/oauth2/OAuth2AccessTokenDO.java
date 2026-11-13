@@ -2,11 +2,14 @@ package cn.afei.mall.module.system.dal.dataobject.oauth2;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
 import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonListStringConverter;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonMapStringConverter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -22,8 +25,8 @@ import java.util.Map;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_oauth2_access_token", autoResultMap = true)
-@KeySequence("system_oauth2_access_token_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_oauth2_access_token")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OAuth2AccessTokenDO extends TenantBaseDO {
@@ -31,7 +34,8 @@ public class OAuth2AccessTokenDO extends TenantBaseDO {
     /**
      * 编号，数据库递增
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 访问令牌
@@ -54,7 +58,7 @@ public class OAuth2AccessTokenDO extends TenantBaseDO {
     /**
      * 用户信息
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonMapStringConverter.class)
     private Map<String, String> userInfo;
     /**
      * 客户端编号
@@ -65,7 +69,7 @@ public class OAuth2AccessTokenDO extends TenantBaseDO {
     /**
      * 授权范围
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> scopes;
     /**
      * 过期时间

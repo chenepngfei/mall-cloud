@@ -2,12 +2,15 @@ package cn.afei.mall.module.system.dal.dataobject.tenant;
 
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.type.StringListTypeHandler;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.system.dal.dataobject.user.AdminUserDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.CommaStringListConverter;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -18,8 +21,8 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_tenant", autoResultMap = true)
-@KeySequence("system_tenant_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_tenant")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -37,6 +40,8 @@ public class TenantDO extends BaseDO {
     /**
      * 租户编号，自增
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 租户名，唯一
@@ -68,7 +73,7 @@ public class TenantDO extends BaseDO {
      * 1. 考虑到对微信小程序的兼容，也允许传递 appid
      * 2. 为什么是数组，考虑到管理后台、会员前台都有独立的域名，又或者多个管理后台
      */
-    @TableField(typeHandler = StringListTypeHandler.class)
+    @Convert(converter = CommaStringListConverter.class)
     private List<String> websites;
     /**
      * 租户套餐编号

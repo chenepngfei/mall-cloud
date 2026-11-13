@@ -3,10 +3,13 @@ package cn.afei.mall.module.system.dal.dataobject.tenant;
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonSetLongConverter;
 import lombok.*;
 
 import java.util.Set;
@@ -16,8 +19,8 @@ import java.util.Set;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_tenant_package", autoResultMap = true)
-@KeySequence("system_tenant_package_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_tenant_package")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -30,6 +33,8 @@ public class TenantPackageDO extends BaseDO {
     /**
      * 套餐编号，自增
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 套餐名，唯一
@@ -48,7 +53,7 @@ public class TenantPackageDO extends BaseDO {
     /**
      * 关联的菜单编号
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonSetLongConverter.class)
     private Set<Long> menuIds;
 
 }

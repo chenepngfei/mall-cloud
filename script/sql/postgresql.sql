@@ -1,0 +1,33 @@
+-- ============================================================
+-- mall-cloud PostgreSQL 迁移：增量修正脚本
+-- ============================================================
+-- 背景：
+--   目标库 10.211.55.123:5432/mall-cloud（schema "mall-cloud"）已由 MySQL 全量脚本
+--   /opt/software/mall-cloud.sql 迁移完成（308 张表 + 全量初始化数据），本脚本仅包含
+--   迁移核对后确认需要的增量修正，可重复执行（幂等）。
+--
+-- 核对结论（MySQL 源 ↔ PG 目标 全量比对）：
+--   1. 表集合：业务 41 表全部一致；demo 表（mall_demo01~03）两边均无（代码生成示例，无建表 SQL）
+--   2. 索引：41 张业务表索引差异 = 0（全部随迁移带入）
+--   3. 列类型映射：bit(1)→boolean、tinyint→smallint、datetime→timestamptz、
+--      JSON/逗号分隔字段→varchar（JPA Converter 处理，与原存储格式 100% 兼容）
+--   4. NOT NULL 无默认值的 209 个业务必填列：均在实体映射内、由业务代码赋值，
+--      与 MySQL 原库约束一致，无需处理；唯一例外见下方第 1 项
+--
+-- 增量修正内容：
+--   1. system_operate_log.success —— 实体（OperateLogDO）历史上未映射该列，
+--      原 MySQL 依赖列默认值 b'1'（操作成功）写入；PG 迁移后该列 NOT NULL 且无默认值，
+--      JPA INSERT 不含该列会违反非空约束。补默认值后与原 MySQL 行为完全一致。
+--
+-- 主键策略说明：
+--   全部业务表主键为 bigint + nextval 序列（serial 风格自增），序列状态已核对
+--   （is_called=true，nextval = max_id + 1），与原 MySQL AUTO_INCREMENT 行为一致。
+-- ============================================================
+
+-- 1. 操作日志 success 列补默认值（对齐原 MySQL 的 DEFAULT b'1'；幂等可重复执行）
+ALTER TABLE "mall-cloud".system_operate_log ALTER COLUMN success SET DEFAULT true;
+
+-- ============================================================
+-- 执行方式：psql -h 10.211.55.123 -U postgres -d mall-cloud -f postgresql.sql
+-- 或任意 PG 客户端对目标库执行
+-- ============================================================

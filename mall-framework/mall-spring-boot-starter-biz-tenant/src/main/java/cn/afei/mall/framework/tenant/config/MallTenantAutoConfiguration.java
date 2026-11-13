@@ -2,12 +2,10 @@ package cn.afei.mall.framework.tenant.config;
 
 import cn.afei.mall.framework.common.biz.system.tenant.TenantCommonApi;
 import cn.afei.mall.framework.common.enums.WebFilterOrderEnum;
-import cn.afei.mall.framework.mybatis.core.util.MyBatisUtils;
 import cn.afei.mall.framework.redis.config.MallCacheProperties;
 import cn.afei.mall.framework.security.core.service.SecurityFrameworkService;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnoreAspect;
-import cn.afei.mall.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.afei.mall.framework.tenant.core.job.TenantJobAspect;
 import cn.afei.mall.framework.tenant.core.mq.rabbitmq.TenantRabbitMQInitializer;
 import cn.afei.mall.framework.tenant.core.mq.redis.TenantRedisMessageInterceptor;
@@ -20,8 +18,6 @@ import cn.afei.mall.framework.tenant.core.web.TenantContextWebFilter;
 import cn.afei.mall.framework.tenant.core.web.TenantVisitContextInterceptor;
 import cn.afei.mall.framework.web.config.WebProperties;
 import cn.afei.mall.framework.web.core.handler.GlobalExceptionHandler;
-import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import jakarta.annotation.Resource;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -62,6 +58,15 @@ public class MallTenantAutoConfiguration {
         return new TenantFrameworkServiceImpl(tenantApi);
     }
 
+    // ========== JPA 租户桥接 ==========
+
+    @Bean
+    public cn.afei.mall.framework.mybatis.core.repository.TenantIdSupplier tenantIdSupplier() {
+        // 忽略状态返回 null（跳过过滤）；正常取当前租户（无上下文抛异常，对齐原拦截器强制隔离）
+        return () -> cn.afei.mall.framework.tenant.core.context.TenantContextHolder.isIgnore()
+                ? null : cn.afei.mall.framework.tenant.core.context.TenantContextHolder.getRequiredTenantId();
+    }
+
     // ========== AOP ==========
 
     @Bean
@@ -69,17 +74,6 @@ public class MallTenantAutoConfiguration {
         return new TenantIgnoreAspect();
     }
 
-    // ========== DB ==========
-
-    @Bean
-    public TenantLineInnerInterceptor tenantLineInnerInterceptor(TenantProperties properties,
-                                                                 MybatisPlusInterceptor interceptor) {
-        TenantLineInnerInterceptor inner = new TenantLineInnerInterceptor(new TenantDatabaseInterceptor(properties));
-        // 添加到 interceptor 中
-        // 需要加在首个，主要是为了在分页插件前面。这个是 MyBatis Plus 的规定
-        MyBatisUtils.addInterceptor(interceptor, inner, 0);
-        return inner;
-    }
 
     // ========== WEB ==========
 

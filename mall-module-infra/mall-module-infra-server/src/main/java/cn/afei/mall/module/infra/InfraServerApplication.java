@@ -1,7 +1,10 @@
 package cn.afei.mall.module.infra;
 
 import org.springframework.boot.SpringApplication;
+import cn.afei.mall.framework.mybatis.core.repository.BaseRepositoryXImpl;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * 项目的启动类

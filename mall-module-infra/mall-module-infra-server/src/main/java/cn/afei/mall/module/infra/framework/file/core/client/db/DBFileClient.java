@@ -3,7 +3,7 @@ package cn.afei.mall.module.infra.framework.file.core.client.db;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileContentDO;
-import cn.afei.mall.module.infra.dal.mysql.file.FileContentMapper;
+import cn.afei.mall.module.infra.dal.jpa.file.FileContentRepository;
 import cn.afei.mall.module.infra.framework.file.core.client.AbstractFileClient;
 
 import java.util.Comparator;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class DBFileClient extends AbstractFileClient<DBFileClientConfig> {
 
-    private FileContentMapper fileContentMapper;
+    private FileContentRepository fileContentRepository;
 
     public DBFileClient(Long id, DBFileClientConfig config) {
         super(id, config);
@@ -24,26 +24,26 @@ public class DBFileClient extends AbstractFileClient<DBFileClientConfig> {
 
     @Override
     protected void doInit() {
-        fileContentMapper = SpringUtil.getBean(FileContentMapper.class);
+        fileContentRepository = SpringUtil.getBean(FileContentRepository.class);
     }
 
     @Override
     public String upload(byte[] content, String path, String type) {
         FileContentDO contentDO = new FileContentDO().setConfigId(getId())
                 .setPath(path).setContent(content);
-        fileContentMapper.insert(contentDO);
+        fileContentRepository.save(contentDO);
         // 拼接返回路径
         return super.formatFileUrl(config.getDomain(), path);
     }
 
     @Override
     public void delete(String path) {
-        fileContentMapper.deleteByConfigIdAndPath(getId(), path);
+        fileContentRepository.deleteByConfigIdAndPath(getId(), path);
     }
 
     @Override
     public byte[] getContent(String path) {
-        List<FileContentDO> list = fileContentMapper.selectListByConfigIdAndPath(getId(), path);
+        List<FileContentDO> list = fileContentRepository.selectListByConfigIdAndPath(getId(), path);
         if (CollUtil.isEmpty(list)) {
             return null;
         }

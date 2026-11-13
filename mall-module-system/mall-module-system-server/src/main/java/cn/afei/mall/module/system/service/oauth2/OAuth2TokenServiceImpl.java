@@ -19,8 +19,8 @@ import cn.afei.mall.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
 import cn.afei.mall.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
 import cn.afei.mall.module.system.dal.dataobject.oauth2.OAuth2RefreshTokenDO;
 import cn.afei.mall.module.system.dal.dataobject.user.AdminUserDO;
-import cn.afei.mall.module.system.dal.mysql.oauth2.OAuth2AccessTokenMapper;
-import cn.afei.mall.module.system.dal.mysql.oauth2.OAuth2RefreshTokenMapper;
+import cn.afei.mall.module.system.dal.jpa.oauth2.OAuth2AccessTokenRepository;
+import cn.afei.mall.module.system.dal.jpa.oauth2.OAuth2RefreshTokenRepository;
 import cn.afei.mall.module.system.dal.redis.oauth2.OAuth2AccessTokenRedisDAO;
 import cn.afei.mall.module.system.service.user.AdminUserService;
 import jakarta.annotation.Resource;
@@ -45,9 +45,9 @@ import static cn.afei.mall.framework.common.util.collection.CollectionUtils.conv
 public class OAuth2TokenServiceImpl implements OAuth2TokenService {
 
     @Resource
-    private OAuth2AccessTokenMapper oauth2AccessTokenMapper;
+    private OAuth2AccessTokenRepository oauth2AccessTokenRepository;
     @Resource
-    private OAuth2RefreshTokenMapper oauth2RefreshTokenMapper;
+    private OAuth2RefreshTokenRepository oauth2RefreshTokenRepository;
 
     @Resource
     private OAuth2AccessTokenRedisDAO oauth2AccessTokenRedisDAO;
@@ -72,7 +72,7 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
     @Transactional(noRollbackFor = ServiceException.class)
     public OAuth2AccessTokenDO refreshAccessToken(String refreshToken, String clientId) {
         // 查询访问令牌
-        OAuth2RefreshTokenDO refreshTokenDO = oauth2RefreshTokenMapper.selectByRefreshToken(refreshToken);
+        OAuth2RefreshTokenDO refreshTokenDO = oauth2RefreshTokenRepository.selectByRefreshToken(refreshToken);
         if (refreshTokenDO == null) {
             throw exception0(GlobalErrorCodeConstants.BAD_REQUEST.getCode(), "无效的刷新令牌");
         }
@@ -84,15 +84,15 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
         }
 
         // 移除相关的访问令牌
-        List<OAuth2AccessTokenDO> accessTokenDOs = oauth2AccessTokenMapper.selectListByRefreshToken(refreshToken);
+        List<OAuth2AccessTokenDO> accessTokenDOs = oauth2AccessTokenRepository.selectListByRefreshToken(refreshToken);
         if (CollUtil.isNotEmpty(accessTokenDOs)) {
-            oauth2AccessTokenMapper.deleteByIds(convertSet(accessTokenDOs, OAuth2AccessTokenDO::getId));
+            oauth2AccessTokenRepository.deleteBatchIdsLogically(convertSet(accessTokenDOs, OAuth2AccessTokenDO::getId));
             oauth2AccessTokenRedisDAO.deleteList(convertSet(accessTokenDOs, OAuth2AccessTokenDO::getAccessToken));
         }
 
         // 已过期的情况下，删除刷新令牌
         if (DateUtils.isExpired(refreshTokenDO.getExpiresTime())) {
-            oauth2RefreshTokenMapper.deleteById(refreshTokenDO.getId());
+            oauth2RefreshTokenRepository.deleteByIdLogically(refreshTokenDO.getId());
             throw exception0(GlobalErrorCodeConstants.UNAUTHORIZED.getCode(), "刷新令牌已过期");
         }
 
@@ -109,12 +109,12 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
         }
 
         // 获取不到，从 MySQL 中获取访问令牌
-        accessTokenDO = oauth2AccessTokenMapper.selectByAccessToken(accessToken);
+        accessTokenDO = oauth2AccessTokenRepository.selectByAccessToken(accessToken);
         if (accessTokenDO == null) {
             // 特殊：从 MySQL 中获取刷新令牌。原因：解决部分场景不方便刷新访问令牌场景
             // 例如说，积木报表只允许传递 token，不允许传递 refresh_token，导致无法刷新访问令牌
             // 再例如说，前端 WebSocket 的 token 直接跟在 url 上，无法传递 refresh_token
-            OAuth2RefreshTokenDO refreshTokenDO = oauth2RefreshTokenMapper.selectByRefreshToken(accessToken);
+            OAuth2RefreshTokenDO refreshTokenDO = oauth2RefreshTokenRepository.selectByRefreshToken(accessToken);
             if (refreshTokenDO != null && !DateUtils.isExpired(refreshTokenDO.getExpiresTime())) {
                 accessTokenDO = convertToAccessToken(refreshTokenDO);
             }
@@ -143,37 +143,37 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
     @Transactional(rollbackFor = Exception.class)
     public OAuth2AccessTokenDO removeAccessToken(String accessToken) {
         // 删除访问令牌
-        OAuth2AccessTokenDO accessTokenDO = oauth2AccessTokenMapper.selectByAccessToken(accessToken);
+        OAuth2AccessTokenDO accessTokenDO = oauth2AccessTokenRepository.selectByAccessToken(accessToken);
         if (accessTokenDO == null) {
             return null;
         }
-        oauth2AccessTokenMapper.deleteById(accessTokenDO.getId());
+        oauth2AccessTokenRepository.deleteByIdLogically(accessTokenDO.getId());
         oauth2AccessTokenRedisDAO.delete(accessToken);
         // 删除刷新令牌
-        oauth2RefreshTokenMapper.deleteByRefreshToken(accessTokenDO.getRefreshToken());
+        oauth2RefreshTokenRepository.deleteByRefreshToken(accessTokenDO.getRefreshToken());
         oauth2AccessTokenRedisDAO.delete(accessTokenDO.getRefreshToken());
         return accessTokenDO;
     }
 
     @Override
     public void removeAccessToken(Long userId, Integer userType) {
-        List<OAuth2AccessTokenDO> accessTokens = oauth2AccessTokenMapper.selectListByUserIdAndUserType(userId, userType);
+        List<OAuth2AccessTokenDO> accessTokens = oauth2AccessTokenRepository.selectListByUserIdAndUserType(userId, userType);
         if (CollUtil.isEmpty(accessTokens)) {
             return;
         }
         accessTokens.forEach(accessToken -> {
             // 删除访问令牌
-            oauth2AccessTokenMapper.deleteById(accessToken.getId());
+            oauth2AccessTokenRepository.deleteByIdLogically(accessToken.getId());
             oauth2AccessTokenRedisDAO.delete(accessToken.getAccessToken());
             // 删除刷新令牌
-            oauth2RefreshTokenMapper.deleteByRefreshToken(accessToken.getRefreshToken());
+            oauth2RefreshTokenRepository.deleteByRefreshToken(accessToken.getRefreshToken());
             oauth2AccessTokenRedisDAO.delete(accessToken.getRefreshToken());
         });
     }
 
     @Override
     public PageResult<OAuth2AccessTokenDO> getAccessTokenPage(OAuth2AccessTokenPageReqVO reqVO) {
-        return oauth2AccessTokenMapper.selectPage(reqVO);
+        return oauth2AccessTokenRepository.selectPage(reqVO);
     }
 
     private OAuth2AccessTokenDO createOAuth2AccessToken(OAuth2RefreshTokenDO refreshTokenDO, OAuth2ClientDO clientDO) {
@@ -190,7 +190,7 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
             tenantId = TenantContextHolder.getTenantId();
         }
         accessTokenDO.setTenantId(tenantId);
-        oauth2AccessTokenMapper.insert(accessTokenDO);
+        oauth2AccessTokenRepository.save(accessTokenDO);
         // 记录到 Redis 中
         oauth2AccessTokenRedisDAO.set(accessTokenDO);
         return accessTokenDO;
@@ -201,7 +201,7 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
                 .setUserId(userId).setUserType(userType)
                 .setClientId(clientDO.getClientId()).setScopes(scopes)
                 .setExpiresTime(LocalDateTime.now().plusSeconds(clientDO.getRefreshTokenValiditySeconds()));
-        oauth2RefreshTokenMapper.insert(refreshToken);
+        oauth2RefreshTokenRepository.save(refreshToken);
         return refreshToken;
     }
 
@@ -249,7 +249,7 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
         LocalDateTime expireDate = LocalDateTime.now().minusDays(exceedDay);
         // 循环删除，直到没有满足条件的数据
         for (int i = 0; i < Short.MAX_VALUE; i++) {
-            int deleteCount = oauth2RefreshTokenMapper.deleteByExpiresTimeLt(expireDate, deleteLimit);
+            int deleteCount = oauth2RefreshTokenRepository.deleteByExpiresTimeLt(expireDate, deleteLimit);
             count += deleteCount;
             // 达到删除预期条数，说明到底了
             if (deleteCount < deleteLimit) {
@@ -265,7 +265,7 @@ public class OAuth2TokenServiceImpl implements OAuth2TokenService {
         LocalDateTime expireDate = LocalDateTime.now().minusDays(exceedDay);
         // 循环删除，直到没有满足条件的数据
         for (int i = 0; i < Short.MAX_VALUE; i++) {
-            int deleteCount = oauth2AccessTokenMapper.deleteByExpiresTimeLt(expireDate, deleteLimit);
+            int deleteCount = oauth2AccessTokenRepository.deleteByExpiresTimeLt(expireDate, deleteLimit);
             count += deleteCount;
             // 达到删除预期条数，说明到底了
             if (deleteCount < deleteLimit) {

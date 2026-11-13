@@ -9,8 +9,8 @@ import cn.afei.mall.module.system.controller.admin.tenant.vo.packages.TenantPack
 import cn.afei.mall.module.system.controller.admin.tenant.vo.packages.TenantPackageSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.tenant.TenantDO;
 import cn.afei.mall.module.system.dal.dataobject.tenant.TenantPackageDO;
-import cn.afei.mall.module.system.dal.mysql.tenant.TenantPackageMapper;
-import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+import cn.afei.mall.module.system.dal.jpa.tenant.TenantPackageRepository;
+import org.springframework.transaction.annotation.Transactional;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
@@ -32,7 +32,7 @@ import static cn.afei.mall.module.system.enums.ErrorCodeConstants.*;
 public class TenantPackageServiceImpl implements TenantPackageService {
 
     @Resource
-    private TenantPackageMapper tenantPackageMapper;
+    private TenantPackageRepository tenantPackageRepository;
 
     @Resource
     @Lazy // 避免循环依赖的报错
@@ -44,13 +44,13 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         validateTenantPackageNameUnique(null, createReqVO.getName());
         // 插入
         TenantPackageDO tenantPackage = BeanUtils.toBean(createReqVO, TenantPackageDO.class);
-        tenantPackageMapper.insert(tenantPackage);
+        tenantPackageRepository.save(tenantPackage);
         // 返回
         return tenantPackage.getId();
     }
 
     @Override
-    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
+    @Transactional(rollbackFor = Exception.class) // 原 @DSTransactional（多数据源事务），单库下等价本地事务
     public void updateTenantPackage(TenantPackageSaveReqVO updateReqVO) {
         // 校验存在
         TenantPackageDO tenantPackage = validateTenantPackageExists(updateReqVO.getId());
@@ -58,7 +58,7 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         validateTenantPackageNameUnique(updateReqVO.getId(), updateReqVO.getName());
         // 更新
         TenantPackageDO updateObj = BeanUtils.toBean(updateReqVO, TenantPackageDO.class);
-        tenantPackageMapper.updateById(updateObj);
+        tenantPackageRepository.updateByIdSelective(updateObj);
         // 如果菜单发生变化，则修改每个租户的菜单
         if (!CollUtil.isEqualList(tenantPackage.getMenuIds(), updateReqVO.getMenuIds())) {
             List<TenantDO> tenants = tenantService.getTenantListByPackageId(tenantPackage.getId());
@@ -73,7 +73,7 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         // 校验正在使用
         validateTenantUsed(id);
         // 删除
-        tenantPackageMapper.deleteById(id);
+        tenantPackageRepository.deleteByIdLogically(id);
     }
 
     @Override
@@ -86,11 +86,11 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         }
 
         // 2. 批量删除
-        tenantPackageMapper.deleteByIds(ids);
+        tenantPackageRepository.deleteBatchIdsLogically(ids);
     }
 
     private TenantPackageDO validateTenantPackageExists(Long id) {
-        TenantPackageDO tenantPackage = tenantPackageMapper.selectById(id);
+        TenantPackageDO tenantPackage = tenantPackageRepository.selectById(id);
         if (tenantPackage == null) {
             throw exception(TENANT_PACKAGE_NOT_EXISTS);
         }
@@ -105,17 +105,17 @@ public class TenantPackageServiceImpl implements TenantPackageService {
 
     @Override
     public TenantPackageDO getTenantPackage(Long id) {
-        return tenantPackageMapper.selectById(id);
+        return tenantPackageRepository.selectById(id);
     }
 
     @Override
     public PageResult<TenantPackageDO> getTenantPackagePage(TenantPackagePageReqVO pageReqVO) {
-        return tenantPackageMapper.selectPage(pageReqVO);
+        return tenantPackageRepository.selectPage(pageReqVO);
     }
 
     @Override
     public TenantPackageDO validTenantPackage(Long id) {
-        TenantPackageDO tenantPackage = tenantPackageMapper.selectById(id);
+        TenantPackageDO tenantPackage = tenantPackageRepository.selectById(id);
         if (tenantPackage == null) {
             throw exception(TENANT_PACKAGE_NOT_EXISTS);
         }
@@ -127,7 +127,7 @@ public class TenantPackageServiceImpl implements TenantPackageService {
 
     @Override
     public List<TenantPackageDO> getTenantPackageListByStatus(Integer status) {
-        return tenantPackageMapper.selectListByStatus(status);
+        return tenantPackageRepository.selectListByStatus(status);
     }
 
 
@@ -136,7 +136,7 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         if (StrUtil.isBlank(name)) {
             return;
         }
-        TenantPackageDO tenantPackage = tenantPackageMapper.selectByName(name);
+        TenantPackageDO tenantPackage = tenantPackageRepository.selectByName(name);
         if (tenantPackage == null) {
             return;
         }

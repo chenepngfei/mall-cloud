@@ -1,7 +1,5 @@
 package cn.afei.mall.framework.datapermission.core.annotation;
 
-import cn.afei.mall.framework.datapermission.core.rule.DataPermissionRule;
-
 import java.lang.annotation.*;
 
 /**
@@ -22,14 +20,6 @@ public @interface DataPermission {
      */
     boolean enable() default true;
 
-    /**
-     * 生效的数据权限规则数组，优先级高于 {@link #excludeRules()}
-     */
-    Class<? extends DataPermissionRule>[] includeRules() default {};
-
-    /**
-     * 排除的数据权限规则数组，优先级最低
-     */
-    Class<? extends DataPermissionRule>[] excludeRules() default {};
+    // 原 includeRules/excludeRules（按 DataPermissionRule 类过滤）已随 SQL 改写体系移除，业务侧零使用
 
 }

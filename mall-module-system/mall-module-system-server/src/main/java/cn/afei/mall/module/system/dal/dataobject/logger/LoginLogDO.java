@@ -1,11 +1,14 @@
 package cn.afei.mall.module.system.dal.dataobject.logger;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.module.system.enums.logger.LoginLogTypeEnum;
 import cn.afei.mall.module.system.enums.logger.LoginResultEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,16 +20,18 @@ import lombok.ToString;
  *
  * @author 芋道源码
  */
-@TableName("system_login_log")
-@KeySequence("system_login_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_login_log")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class LoginLogDO extends BaseDO {
+public class LoginLogDO extends TenantBaseDO {
 
     /**
      * 日志主键
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 日志类型

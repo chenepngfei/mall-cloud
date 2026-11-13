@@ -4,11 +4,13 @@ import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import cn.afei.mall.module.system.enums.permission.DataScopeEnum;
 import cn.afei.mall.module.system.enums.permission.RoleTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonSetLongConverter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,8 +21,8 @@ import java.util.Set;
  *
  * @author ruoyi
  */
-@TableName(value = "system_role", autoResultMap = true)
-@KeySequence("system_role_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_role")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class RoleDO extends TenantBaseDO {
@@ -28,7 +30,8 @@ public class RoleDO extends TenantBaseDO {
     /**
      * 角色ID
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 角色名称
@@ -72,7 +75,7 @@ public class RoleDO extends TenantBaseDO {
      *
      * 适用于 {@link #dataScope} 的值为 {@link DataScopeEnum#DEPT_CUSTOM} 时
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonSetLongConverter.class)
     private Set<Long> dataScopeDeptIds;
 
 }

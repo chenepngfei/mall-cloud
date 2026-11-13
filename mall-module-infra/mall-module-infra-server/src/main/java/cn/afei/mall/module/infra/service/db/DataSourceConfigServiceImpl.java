@@ -1,13 +1,12 @@
 package cn.afei.mall.module.infra.service.db;
 
 import cn.afei.mall.framework.common.util.object.BeanUtils;
-import cn.afei.mall.framework.mybatis.core.util.JdbcUtils;
+import cn.afei.mall.module.infra.framework.codegen.core.util.JdbcUtils;
 import cn.afei.mall.module.infra.controller.admin.db.vo.DataSourceConfigSaveReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.db.DataSourceConfigDO;
-import cn.afei.mall.module.infra.dal.mysql.db.DataSourceConfigMapper;
-import com.baomidou.dynamic.datasource.creator.DataSourceProperty;
-import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties;
+import cn.afei.mall.module.infra.dal.jpa.db.DataSourceConfigRepository;
 import jakarta.annotation.Resource;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -28,10 +27,10 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DATA_SOURCE_CON
 public class DataSourceConfigServiceImpl implements DataSourceConfigService {
 
     @Resource
-    private DataSourceConfigMapper dataSourceConfigMapper;
+    private DataSourceConfigRepository dataSourceConfigRepository;
 
     @Resource
-    private DynamicDataSourceProperties dynamicDataSourceProperties;
+    private Environment environment;
 
     @Override
     public Long createDataSourceConfig(DataSourceConfigSaveReqVO createReqVO) {
@@ -39,7 +38,7 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
         validateConnectionOK(config);
 
         // 插入
-        dataSourceConfigMapper.insert(config);
+        dataSourceConfigRepository.save(config);
         // 返回
         return config.getId();
     }
@@ -52,7 +51,7 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
         validateConnectionOK(updateObj);
 
         // 更新
-        dataSourceConfigMapper.updateById(updateObj);
+        dataSourceConfigRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -60,16 +59,16 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
         // 校验存在
         validateDataSourceConfigExists(id);
         // 删除
-        dataSourceConfigMapper.deleteById(id);
+        dataSourceConfigRepository.deleteByIdLogically(id);
     }
 
     @Override
     public void deleteDataSourceConfigList(List<Long> ids) {
-        dataSourceConfigMapper.deleteByIds(ids);
+        dataSourceConfigRepository.deleteBatchIdsLogically(ids);
     }
 
     private void validateDataSourceConfigExists(Long id) {
-        if (dataSourceConfigMapper.selectById(id) == null) {
+        if (dataSourceConfigRepository.selectById(id) == null) {
             throw exception(DATA_SOURCE_CONFIG_NOT_EXISTS);
         }
     }
@@ -81,12 +80,12 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
             return buildMasterDataSourceConfig();
         }
         // 从 DB 中读取
-        return dataSourceConfigMapper.selectById(id);
+        return dataSourceConfigRepository.selectById(id);
     }
 
     @Override
     public List<DataSourceConfigDO> getDataSourceConfigList() {
-        List<DataSourceConfigDO> result = dataSourceConfigMapper.selectList();
+        List<DataSourceConfigDO> result = dataSourceConfigRepository.selectAll();
         // 补充 master 数据源
         result.add(0, buildMasterDataSourceConfig());
         return result;
@@ -100,12 +99,11 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
     }
 
     private DataSourceConfigDO buildMasterDataSourceConfig() {
-        String primary = dynamicDataSourceProperties.getPrimary();
-        DataSourceProperty dataSourceProperty = dynamicDataSourceProperties.getDatasource().get(primary);
-        return new DataSourceConfigDO().setId(DataSourceConfigDO.ID_MASTER).setName(primary)
-                .setUrl(dataSourceProperty.getUrl())
-                .setUsername(dataSourceProperty.getUsername())
-                .setPassword(dataSourceProperty.getPassword());
+        // 原 dynamic-datasource 的 master 数据源信息，迁移后从标准 spring.datasource 配置读取
+        return new DataSourceConfigDO().setId(DataSourceConfigDO.ID_MASTER).setName("master")
+                .setUrl(environment.getProperty("spring.datasource.url"))
+                .setUsername(environment.getProperty("spring.datasource.username"))
+                .setPassword(environment.getProperty("spring.datasource.password"));
     }
 
 }

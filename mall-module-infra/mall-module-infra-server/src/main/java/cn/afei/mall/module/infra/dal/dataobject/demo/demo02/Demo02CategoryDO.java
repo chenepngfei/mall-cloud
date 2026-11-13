@@ -1,9 +1,11 @@
 package cn.afei.mall.module.infra.dal.dataobject.demo.demo02;
 
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import lombok.*;
 
 /**
@@ -11,22 +13,23 @@ import lombok.*;
  *
  * @author 芋道源码
  */
-@TableName("mall_demo02_category")
-@KeySequence("mall_demo02_category_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "mall_demo02_category")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Demo02CategoryDO extends BaseDO {
+public class Demo02CategoryDO extends TenantBaseDO {
 
     public static final Long PARENT_ID_ROOT = 0L;
 
     /**
      * 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 名字

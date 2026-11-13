@@ -3,10 +3,12 @@ package cn.afei.mall.module.infra.dal.dataobject.logger;
 import cn.afei.mall.framework.apilog.core.enums.OperateTypeEnum;
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
 import cn.afei.mall.framework.common.pojo.CommonResult;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -16,15 +18,15 @@ import java.time.LocalDateTime;
  *
  * @author 芋道源码
  */
-@TableName("infra_api_access_log")
-@KeySequence(value = "infra_api_access_log_seq")
+@Entity
+@Table(name = "infra_api_access_log")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiAccessLogDO extends BaseDO {
+public class ApiAccessLogDO extends TenantBaseDO {
 
     /**
      * {@link #requestParams} 的最大长度
@@ -39,7 +41,8 @@ public class ApiAccessLogDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 链路追踪编号

@@ -1,3 +1,3 @@
+cn.afei.mall.framework.mybatis.config.MallJpaAutoConfiguration
 cn.afei.mall.framework.datasource.config.MallDataSourceAutoConfiguration
-cn.afei.mall.framework.mybatis.config.MallMybatisAutoConfiguration
 cn.afei.mall.framework.translate.config.MallTranslateAutoConfiguration

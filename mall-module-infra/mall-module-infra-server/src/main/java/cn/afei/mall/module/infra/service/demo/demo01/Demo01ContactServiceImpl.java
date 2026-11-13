@@ -6,7 +6,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.infra.controller.admin.demo.demo01.vo.Demo01ContactPageReqVO;
 import cn.afei.mall.module.infra.controller.admin.demo.demo01.vo.Demo01ContactSaveReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo01.Demo01ContactDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo01.Demo01ContactMapper;
+import cn.afei.mall.module.infra.dal.jpa.demo.Demo01ContactRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -26,13 +26,13 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.DEMO01_CONTACT_
 public class Demo01ContactServiceImpl implements Demo01ContactService {
 
     @Resource
-    private Demo01ContactMapper demo01ContactMapper;
+    private Demo01ContactRepository demo01ContactRepository;
 
     @Override
     public Long createDemo01Contact(Demo01ContactSaveReqVO createReqVO) {
         // 插入
         Demo01ContactDO demo01Contact = BeanUtils.toBean(createReqVO, Demo01ContactDO.class);
-        demo01ContactMapper.insert(demo01Contact);
+        demo01ContactRepository.save(demo01Contact);
         // 返回
         return demo01Contact.getId();
     }
@@ -43,7 +43,7 @@ public class Demo01ContactServiceImpl implements Demo01ContactService {
         validateDemo01ContactExists(updateReqVO.getId());
         // 更新
         Demo01ContactDO updateObj = BeanUtils.toBean(updateReqVO, Demo01ContactDO.class);
-        demo01ContactMapper.updateById(updateObj);
+        demo01ContactRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Demo01ContactServiceImpl implements Demo01ContactService {
         // 校验存在
         validateDemo01ContactExists(id);
         // 删除
-        demo01ContactMapper.deleteById(id);
+        demo01ContactRepository.deleteByIdLogically(id);
     }
 
     @Override
@@ -59,30 +59,30 @@ public class Demo01ContactServiceImpl implements Demo01ContactService {
         // 校验存在
         validateDemo01ContactExists(ids);
         // 删除
-        demo01ContactMapper.deleteByIds(ids);
+        demo01ContactRepository.deleteBatchIdsLogically(ids);
     }
 
     private void validateDemo01ContactExists(List<Long> ids) {
-        List<Demo01ContactDO> list = demo01ContactMapper.selectByIds(ids);
+        List<Demo01ContactDO> list = demo01ContactRepository.selectByIds(ids);
         if (CollUtil.isEmpty(list) || list.size() != ids.size()) {
             throw exception(DEMO01_CONTACT_NOT_EXISTS);
         }
     }
 
     private void validateDemo01ContactExists(Long id) {
-        if (demo01ContactMapper.selectById(id) == null) {
+        if (demo01ContactRepository.selectById(id) == null) {
             throw exception(DEMO01_CONTACT_NOT_EXISTS);
         }
     }
 
     @Override
     public Demo01ContactDO getDemo01Contact(Long id) {
-        return demo01ContactMapper.selectById(id);
+        return demo01ContactRepository.selectById(id);
     }
 
     @Override
     public PageResult<Demo01ContactDO> getDemo01ContactPage(Demo01ContactPageReqVO pageReqVO) {
-        return demo01ContactMapper.selectPage(pageReqVO);
+        return demo01ContactRepository.selectPage(pageReqVO);
     }
 
 }

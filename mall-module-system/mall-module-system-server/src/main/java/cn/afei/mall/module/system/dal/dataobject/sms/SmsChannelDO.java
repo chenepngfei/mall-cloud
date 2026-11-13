@@ -4,8 +4,11 @@ import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.system.framework.sms.core.enums.SmsChannelEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -16,8 +19,8 @@ import lombok.ToString;
  * @author zzf
  * @since 2021-01-25
  */
-@TableName(value = "system_sms_channel", autoResultMap = true)
-@KeySequence("system_sms_channel_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_sms_channel")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -27,6 +30,8 @@ public class SmsChannelDO extends BaseDO {
     /**
      * 渠道编号
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 短信签名

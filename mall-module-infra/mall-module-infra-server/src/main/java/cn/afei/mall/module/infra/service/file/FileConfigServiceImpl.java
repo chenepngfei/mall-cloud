@@ -10,7 +10,7 @@ import cn.afei.mall.module.infra.controller.admin.file.vo.config.FileConfigPageR
 import cn.afei.mall.module.infra.controller.admin.file.vo.config.FileConfigSaveReqVO;
 import cn.afei.mall.module.infra.convert.file.FileConfigConvert;
 import cn.afei.mall.module.infra.dal.dataobject.file.FileConfigDO;
-import cn.afei.mall.module.infra.dal.mysql.file.FileConfigMapper;
+import cn.afei.mall.module.infra.dal.jpa.file.FileConfigRepository;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClient;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClientConfig;
 import cn.afei.mall.module.infra.framework.file.core.client.FileClientFactory;
@@ -57,7 +57,7 @@ public class FileConfigServiceImpl implements FileConfigService {
                 @Override
                 public FileClient load(Long id) {
                     FileConfigDO config = Objects.equals(CACHE_MASTER_ID, id) ?
-                            fileConfigMapper.selectByMaster() : fileConfigMapper.selectById(id);
+                            fileConfigRepository.selectByMaster() : fileConfigRepository.selectById(id);
                     if (config != null) {
                         fileClientFactory.createOrUpdateFileClient(config.getId(), config.getStorage(), config.getConfig());
                     }
@@ -70,7 +70,7 @@ public class FileConfigServiceImpl implements FileConfigService {
     private FileClientFactory fileClientFactory;
 
     @Resource
-    private FileConfigMapper fileConfigMapper;
+    private FileConfigRepository fileConfigRepository;
 
     @Resource
     private Validator validator;
@@ -80,7 +80,7 @@ public class FileConfigServiceImpl implements FileConfigService {
         FileConfigDO fileConfig = FileConfigConvert.INSTANCE.convert(createReqVO)
                 .setConfig(parseClientConfig(createReqVO.getStorage(), createReqVO.getConfig()))
                 .setMaster(false); // 默认非 master
-        fileConfigMapper.insert(fileConfig);
+        fileConfigRepository.save(fileConfig);
         return fileConfig.getId();
     }
 
@@ -91,7 +91,7 @@ public class FileConfigServiceImpl implements FileConfigService {
         // 更新
         FileConfigDO updateObj = FileConfigConvert.INSTANCE.convert(updateReqVO)
                 .setConfig(parseClientConfig(config.getStorage(), updateReqVO.getConfig()));
-        fileConfigMapper.updateById(updateObj);
+        fileConfigRepository.updateByIdSelective(updateObj);
 
         // 清空缓存
         clearCache(config.getId(), config.getMaster());
@@ -103,9 +103,9 @@ public class FileConfigServiceImpl implements FileConfigService {
         // 校验存在
         validateFileConfigExists(id);
         // 更新其它为非 master
-        fileConfigMapper.updateBatch(new FileConfigDO().setMaster(false));
+        fileConfigRepository.updateMasterToFalse(); // 原 MP update(entity, wrapper)：所有 master=true 置 false
         // 更新
-        fileConfigMapper.updateById(new FileConfigDO().setId(id).setMaster(true));
+        fileConfigRepository.updateByIdSelective(new FileConfigDO().setId(id).setMaster(true));
 
         // 清空缓存
         clearCache(null, true);
@@ -130,7 +130,7 @@ public class FileConfigServiceImpl implements FileConfigService {
             throw exception(FILE_CONFIG_DELETE_FAIL_MASTER);
         }
         // 删除
-        fileConfigMapper.deleteById(id);
+        fileConfigRepository.deleteByIdLogically(id);
 
         // 清空缓存
         clearCache(id, config.getMaster());
@@ -139,7 +139,7 @@ public class FileConfigServiceImpl implements FileConfigService {
     @Override
     public void deleteFileConfigList(List<Long> ids) {
         // 校验是否有主配置
-        List<FileConfigDO> configs = fileConfigMapper.selectByIds(ids);
+        List<FileConfigDO> configs = fileConfigRepository.selectByIds(ids);
         for (FileConfigDO config : configs) {
             if (Boolean.TRUE.equals(config.getMaster())) {
                 throw exception(FILE_CONFIG_DELETE_FAIL_MASTER);
@@ -147,7 +147,7 @@ public class FileConfigServiceImpl implements FileConfigService {
         }
 
         // 批量删除
-        fileConfigMapper.deleteByIds(ids);
+        fileConfigRepository.deleteBatchIdsLogically(ids);
 
         // 清空缓存
         ids.forEach(id -> clearCache(id, false));
@@ -169,7 +169,7 @@ public class FileConfigServiceImpl implements FileConfigService {
     }
 
     private FileConfigDO validateFileConfigExists(Long id) {
-        FileConfigDO config = fileConfigMapper.selectById(id);
+        FileConfigDO config = fileConfigRepository.selectById(id);
         if (config == null) {
             throw exception(FILE_CONFIG_NOT_EXISTS);
         }
@@ -178,12 +178,12 @@ public class FileConfigServiceImpl implements FileConfigService {
 
     @Override
     public FileConfigDO getFileConfig(Long id) {
-        return fileConfigMapper.selectById(id);
+        return fileConfigRepository.selectById(id);
     }
 
     @Override
     public PageResult<FileConfigDO> getFileConfigPage(FileConfigPageReqVO pageReqVO) {
-        return fileConfigMapper.selectPage(pageReqVO);
+        return fileConfigRepository.selectPage(pageReqVO);
     }
 
     @Override

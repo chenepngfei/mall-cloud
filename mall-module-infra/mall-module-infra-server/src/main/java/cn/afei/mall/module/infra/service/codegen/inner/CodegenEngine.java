@@ -24,8 +24,6 @@ import cn.afei.mall.framework.excel.core.annotations.DictFormat;
 import cn.afei.mall.framework.excel.core.convert.DictConvert;
 import cn.afei.mall.framework.excel.core.util.ExcelUtils;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX;
-import cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.afei.mall.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.afei.mall.module.infra.enums.codegen.CodegenFrontTypeEnum;
@@ -359,8 +357,8 @@ public class CodegenEngine {
         // DO 类，独有字段
         globalBindingMap.put("BaseDOClassName", BaseDO.class.getName());
         globalBindingMap.put("baseDOFields", CodegenBuilder.BASE_DO_FIELDS);
-        globalBindingMap.put("QueryWrapperClassName", LambdaQueryWrapperX.class.getName());
-        globalBindingMap.put("BaseMapperClassName", BaseMapperX.class.getName());
+        globalBindingMap.put("QueryWrapperClassName", "cn.afei.mall.framework.mybatis.core.query.LambdaQueryWrapperX"); // TODO 模板仍为 MP 风格，JPA 化待后续单独改造
+        globalBindingMap.put("BaseMapperClassName", "cn.afei.mall.framework.mybatis.core.mapper.BaseMapperX"); // TODO 同上
         // Util 工具类
         globalBindingMap.put("ServiceExceptionUtilClassName", ServiceExceptionUtil.class.getName());
         globalBindingMap.put("DateUtilsClassName", DateUtils.class.getName());

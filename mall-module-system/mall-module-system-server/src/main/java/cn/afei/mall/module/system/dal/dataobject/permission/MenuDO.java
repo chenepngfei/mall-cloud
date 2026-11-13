@@ -4,9 +4,11 @@ import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
 import cn.afei.mall.module.system.enums.permission.MenuTypeEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,8 +17,8 @@ import lombok.EqualsAndHashCode;
  *
  * @author ruoyi
  */
-@TableName("system_menu")
-@KeySequence("system_menu_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_menu")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TenantIgnore
@@ -30,7 +32,8 @@ public class MenuDO extends BaseDO {
     /**
      * 菜单编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 菜单名称

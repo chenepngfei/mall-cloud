@@ -11,22 +11,24 @@ import cn.afei.mall.module.infra.framework.file.core.client.local.LocalFileClien
 import cn.afei.mall.module.infra.framework.file.core.client.s3.S3FileClientConfig;
 import cn.afei.mall.module.infra.framework.file.core.client.sftp.SftpFileClientConfig;
 import cn.afei.mall.module.infra.framework.file.core.enums.FileStorageEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.AbstractJsonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.*;
 
-import java.lang.reflect.Field;
 
 /**
  * 文件配置表
  *
  * @author 芋道源码
  */
-@TableName(value = "infra_file_config", autoResultMap = true)
-@KeySequence("infra_file_config_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "infra_file_config")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -39,6 +41,8 @@ public class FileConfigDO extends BaseDO {
     /**
      * 配置编号，数据库自增
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 配置名
@@ -64,21 +68,21 @@ public class FileConfigDO extends BaseDO {
     /**
      * 支付渠道配置
      */
-    @TableField(typeHandler = FileClientConfigTypeHandler.class)
+    @Convert(converter = FileClientConfigConverter.class)
     private FileClientConfig config;
 
-    public static class FileClientConfigTypeHandler extends AbstractJsonTypeHandler<Object> {
+    /**
+     * FileClientConfig 字段转换器 — JSON 文本存 varchar 列（平移原 MP TypeHandler，含老版本包路径兼容）
+     */
+    public static class FileClientConfigConverter implements AttributeConverter<FileClientConfig, String> {
 
-        public FileClientConfigTypeHandler(Class<?> type) {
-            super(type);
-        }
-
-        public FileClientConfigTypeHandler(Class<?> type, Field field) {
-            super(type, field);
+        @Override
+        public String convertToDatabaseColumn(FileClientConfig attribute) {
+            return JsonUtils.toJsonString(attribute);
         }
 
         @Override
-        public Object parse(String json) {
+        public FileClientConfig convertToEntityAttribute(String json) {
             FileClientConfig config = JsonUtils.parseObjectQuietly(json, new TypeReference<>() {});
             if (config != null) {
                 return config;
@@ -101,11 +105,6 @@ public class FileConfigDO extends BaseDO {
                 default:
                     throw new IllegalArgumentException("未知的 FileClientConfig 类型：" + json);
             }
-        }
-
-        @Override
-        public String toJson(Object obj) {
-            return JsonUtils.toJsonString(obj);
         }
 
     }

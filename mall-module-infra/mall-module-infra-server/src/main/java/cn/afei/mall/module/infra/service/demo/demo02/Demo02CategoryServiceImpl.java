@@ -4,7 +4,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.infra.controller.admin.demo.demo02.vo.Demo02CategoryListReqVO;
 import cn.afei.mall.module.infra.controller.admin.demo.demo02.vo.Demo02CategorySaveReqVO;
 import cn.afei.mall.module.infra.dal.dataobject.demo.demo02.Demo02CategoryDO;
-import cn.afei.mall.module.infra.dal.mysql.demo.demo02.Demo02CategoryMapper;
+import cn.afei.mall.module.infra.dal.jpa.demo.Demo02CategoryRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +25,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.*;
 public class Demo02CategoryServiceImpl implements Demo02CategoryService {
 
     @Resource
-    private Demo02CategoryMapper demo02CategoryMapper;
+    private Demo02CategoryRepository demo02CategoryRepository;
 
     @Override
     public Long createDemo02Category(Demo02CategorySaveReqVO createReqVO) {
@@ -36,7 +36,7 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
 
         // 插入
         Demo02CategoryDO demo02Category = BeanUtils.toBean(createReqVO, Demo02CategoryDO.class);
-        demo02CategoryMapper.insert(demo02Category);
+        demo02CategoryRepository.save(demo02Category);
         // 返回
         return demo02Category.getId();
     }
@@ -52,7 +52,7 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
 
         // 更新
         Demo02CategoryDO updateObj = BeanUtils.toBean(updateReqVO, Demo02CategoryDO.class);
-        demo02CategoryMapper.updateById(updateObj);
+        demo02CategoryRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -60,15 +60,15 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
         // 校验存在
         validateDemo02CategoryExists(id);
         // 校验是否有子示例分类
-        if (demo02CategoryMapper.selectCountByParentId(id) > 0) {
+        if (demo02CategoryRepository.selectCountByParentId(id) > 0) {
             throw exception(DEMO02_CATEGORY_EXITS_CHILDREN);
         }
         // 删除
-        demo02CategoryMapper.deleteById(id);
+        demo02CategoryRepository.deleteByIdLogically(id);
     }
 
     private void validateDemo02CategoryExists(Long id) {
-        if (demo02CategoryMapper.selectById(id) == null) {
+        if (demo02CategoryRepository.selectById(id) == null) {
             throw exception(DEMO02_CATEGORY_NOT_EXISTS);
         }
     }
@@ -82,7 +82,7 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
             throw exception(DEMO02_CATEGORY_PARENT_ERROR);
         }
         // 2. 父示例分类不存在
-        Demo02CategoryDO parentDemo02Category = demo02CategoryMapper.selectById(parentId);
+        Demo02CategoryDO parentDemo02Category = demo02CategoryRepository.selectById(parentId);
         if (parentDemo02Category == null) {
             throw exception(DEMO02_CATEGORY_PARENT_NOT_EXITS);
         }
@@ -100,7 +100,7 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
             if (parentId == null || Demo02CategoryDO.PARENT_ID_ROOT.equals(parentId)) {
                 break;
             }
-            parentDemo02Category = demo02CategoryMapper.selectById(parentId);
+            parentDemo02Category = demo02CategoryRepository.selectById(parentId);
             if (parentDemo02Category == null) {
                 break;
             }
@@ -108,7 +108,7 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
     }
 
     private void validateDemo02CategoryNameUnique(Long id, Long parentId, String name) {
-        Demo02CategoryDO demo02Category = demo02CategoryMapper.selectByParentIdAndName(parentId, name);
+        Demo02CategoryDO demo02Category = demo02CategoryRepository.selectByParentIdAndName(parentId, name);
         if (demo02Category == null) {
             return;
         }
@@ -123,12 +123,12 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
 
     @Override
     public Demo02CategoryDO getDemo02Category(Long id) {
-        return demo02CategoryMapper.selectById(id);
+        return demo02CategoryRepository.selectById(id);
     }
 
     @Override
     public List<Demo02CategoryDO> getDemo02CategoryList(Demo02CategoryListReqVO listReqVO) {
-        return demo02CategoryMapper.selectList(listReqVO);
+        return demo02CategoryRepository.selectList(listReqVO);
     }
 
 }

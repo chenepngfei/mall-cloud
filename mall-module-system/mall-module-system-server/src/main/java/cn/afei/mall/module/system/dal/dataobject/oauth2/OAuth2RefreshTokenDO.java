@@ -2,10 +2,13 @@ package cn.afei.mall.module.system.dal.dataobject.oauth2;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
 import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonListStringConverter;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,15 +19,17 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_oauth2_refresh_token", autoResultMap = true)
+@Entity
+@Table(name = "system_oauth2_refresh_token")
 // 由于 Oracle 的 SEQ 的名字长度有限制，所以就先用 system_oauth2_access_token_seq 吧，反正也没啥问题
-@KeySequence("system_oauth2_access_token_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 public class OAuth2RefreshTokenDO extends TenantBaseDO {
 
     /**
      * 编号，数据库字典
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 刷新令牌
@@ -49,7 +54,7 @@ public class OAuth2RefreshTokenDO extends TenantBaseDO {
     /**
      * 授权范围
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> scopes;
     /**
      * 过期时间

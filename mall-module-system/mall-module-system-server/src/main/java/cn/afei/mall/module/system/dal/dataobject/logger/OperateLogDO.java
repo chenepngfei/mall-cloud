@@ -1,10 +1,12 @@
 package cn.afei.mall.module.system.dal.dataobject.logger;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import lombok.Data;
 
 /**
@@ -12,15 +14,16 @@ import lombok.Data;
  *
  * @author 芋道源码
  */
-@TableName(value = "system_operate_log", autoResultMap = true)
-@KeySequence("system_operate_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_operate_log")
 @Data
-public class OperateLogDO extends BaseDO {
+public class OperateLogDO extends TenantBaseDO {
 
     /**
      * 日志主键
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 链路追踪编号

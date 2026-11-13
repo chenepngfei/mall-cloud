@@ -10,7 +10,7 @@ import cn.afei.mall.framework.common.util.object.BeanUtils;
 import cn.afei.mall.module.system.controller.admin.oauth2.vo.client.OAuth2ClientPageReqVO;
 import cn.afei.mall.module.system.controller.admin.oauth2.vo.client.OAuth2ClientSaveReqVO;
 import cn.afei.mall.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
-import cn.afei.mall.module.system.dal.mysql.oauth2.OAuth2ClientMapper;
+import cn.afei.mall.module.system.dal.jpa.oauth2.OAuth2ClientRepository;
 import cn.afei.mall.module.system.dal.redis.RedisKeyConstants;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
@@ -37,14 +37,14 @@ import static cn.afei.mall.module.system.enums.ErrorCodeConstants.*;
 public class OAuth2ClientServiceImpl implements OAuth2ClientService {
 
     @Resource
-    private OAuth2ClientMapper oauth2ClientMapper;
+    private OAuth2ClientRepository oauth2ClientRepository;
 
     @Override
     public Long createOAuth2Client(OAuth2ClientSaveReqVO createReqVO) {
         validateClientIdExists(null, createReqVO.getClientId());
         // 插入
         OAuth2ClientDO client = BeanUtils.toBean(createReqVO, OAuth2ClientDO.class);
-        oauth2ClientMapper.insert(client);
+        oauth2ClientRepository.save(client);
         return client.getId();
     }
 
@@ -59,7 +59,7 @@ public class OAuth2ClientServiceImpl implements OAuth2ClientService {
 
         // 更新
         OAuth2ClientDO updateObj = BeanUtils.toBean(updateReqVO, OAuth2ClientDO.class);
-        oauth2ClientMapper.updateById(updateObj);
+        oauth2ClientRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -69,25 +69,25 @@ public class OAuth2ClientServiceImpl implements OAuth2ClientService {
         // 校验存在
         validateOAuth2ClientExists(id);
         // 删除
-        oauth2ClientMapper.deleteById(id);
+        oauth2ClientRepository.deleteByIdLogically(id);
     }
 
     @Override
     @CacheEvict(cacheNames = RedisKeyConstants.OAUTH_CLIENT,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 key，不好清理
     public void deleteOAuth2ClientList(List<Long> ids) {
-        oauth2ClientMapper.deleteByIds(ids);
+        oauth2ClientRepository.deleteBatchIdsLogically(ids);
     }
 
     private void validateOAuth2ClientExists(Long id) {
-        if (oauth2ClientMapper.selectById(id) == null) {
+        if (oauth2ClientRepository.selectById(id) == null) {
             throw exception(OAUTH2_CLIENT_NOT_EXISTS);
         }
     }
 
     @VisibleForTesting
     void validateClientIdExists(Long id, String clientId) {
-        OAuth2ClientDO client = oauth2ClientMapper.selectByClientId(clientId);
+        OAuth2ClientDO client = oauth2ClientRepository.selectByClientId(clientId);
         if (client == null) {
             return;
         }
@@ -102,19 +102,19 @@ public class OAuth2ClientServiceImpl implements OAuth2ClientService {
 
     @Override
     public OAuth2ClientDO getOAuth2Client(Long id) {
-        return oauth2ClientMapper.selectById(id);
+        return oauth2ClientRepository.selectById(id);
     }
 
     @Override
     @Cacheable(cacheNames = RedisKeyConstants.OAUTH_CLIENT, key = "#clientId",
             unless = "#result == null")
     public OAuth2ClientDO getOAuth2ClientFromCache(String clientId) {
-        return oauth2ClientMapper.selectByClientId(clientId);
+        return oauth2ClientRepository.selectByClientId(clientId);
     }
 
     @Override
     public PageResult<OAuth2ClientDO> getOAuth2ClientPage(OAuth2ClientPageReqVO pageReqVO) {
-        return oauth2ClientMapper.selectPage(pageReqVO);
+        return oauth2ClientRepository.selectPage(pageReqVO);
     }
 
     @Override

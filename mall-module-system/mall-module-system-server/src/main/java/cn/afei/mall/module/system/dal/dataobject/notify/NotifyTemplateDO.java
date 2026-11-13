@@ -3,11 +3,13 @@ package cn.afei.mall.module.system.dal.dataobject.notify;
 import cn.afei.mall.framework.common.enums.CommonStatusEnum;
 import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.framework.tenant.core.aop.TenantIgnore;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Convert;
+import cn.afei.mall.framework.mybatis.core.type.convert.JsonListStringConverter;
 import lombok.*;
 
 import java.util.List;
@@ -17,8 +19,8 @@ import java.util.List;
  *
  * @author xrcoder
  */
-@TableName(value = "system_notify_template", autoResultMap = true)
-@KeySequence("system_notify_template_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@Entity
+@Table(name = "system_notify_template")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -31,7 +33,8 @@ public class NotifyTemplateDO extends BaseDO {
     /**
      * ID
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 模版名称
@@ -58,7 +61,7 @@ public class NotifyTemplateDO extends BaseDO {
     /**
      * 参数数组
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Convert(converter = JsonListStringConverter.class)
     private List<String> params;
     /**
      * 状态

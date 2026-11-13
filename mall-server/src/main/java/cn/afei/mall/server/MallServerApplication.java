@@ -1,7 +1,10 @@
 package cn.afei.mall.server;
 
 import org.springframework.boot.SpringApplication;
+import cn.afei.mall.framework.mybatis.core.repository.BaseRepositoryXImpl;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * 项目的启动类
@@ -13,6 +16,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author 芋道源码
  */
 @SuppressWarnings("SpringComponentScan") // 忽略 IDEA 无法识别 ${mall.info.base-package}
+@EntityScan(basePackages = "cn.afei.mall") // 实体分布在本包之外的 module 包，显式扫描
+@EnableJpaRepositories(basePackages = "cn.afei.mall", repositoryBaseClass = BaseRepositoryXImpl.class)
 @SpringBootApplication(scanBasePackages = {"${mall.info.base-package}.server", "${mall.info.base-package}.module"},
         excludeName = {
             // RPC 相关

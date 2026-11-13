@@ -1,11 +1,13 @@
 package cn.afei.mall.module.infra.dal.dataobject.logger;
 
 import cn.afei.mall.framework.common.enums.UserTypeEnum;
-import cn.afei.mall.framework.mybatis.core.dataobject.BaseDO;
 import cn.afei.mall.module.infra.enums.logger.ApiErrorLogProcessStatusEnum;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import cn.afei.mall.framework.tenant.core.db.TenantBaseDO;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,15 +17,15 @@ import java.time.LocalDateTime;
  *
  * @author 芋道源码
  */
-@TableName("infra_api_error_log")
+@Entity
+@Table(name = "infra_api_error_log")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@KeySequence(value = "infra_api_error_log_seq")
-public class ApiErrorLogDO extends BaseDO {
+public class ApiErrorLogDO extends TenantBaseDO {
 
     /**
      * {@link #requestParams} 的最大长度
@@ -33,7 +35,8 @@ public class ApiErrorLogDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * 用户编号

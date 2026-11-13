@@ -5,7 +5,7 @@ import cn.afei.mall.module.infra.controller.admin.config.vo.ConfigPageReqVO;
 import cn.afei.mall.module.infra.controller.admin.config.vo.ConfigSaveReqVO;
 import cn.afei.mall.module.infra.convert.config.ConfigConvert;
 import cn.afei.mall.module.infra.dal.dataobject.config.ConfigDO;
-import cn.afei.mall.module.infra.dal.mysql.config.ConfigMapper;
+import cn.afei.mall.module.infra.dal.jpa.config.ConfigRepository;
 import cn.afei.mall.module.infra.enums.config.ConfigTypeEnum;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
@@ -27,7 +27,7 @@ import static cn.afei.mall.module.infra.enums.ErrorCodeConstants.*;
 public class ConfigServiceImpl implements ConfigService {
 
     @Resource
-    private ConfigMapper configMapper;
+    private ConfigRepository configRepository;
 
     @Override
     public Long createConfig(ConfigSaveReqVO createReqVO) {
@@ -37,7 +37,7 @@ public class ConfigServiceImpl implements ConfigService {
         // 插入参数配置
         ConfigDO config = ConfigConvert.INSTANCE.convert(createReqVO);
         config.setType(ConfigTypeEnum.CUSTOM.getType());
-        configMapper.insert(config);
+        configRepository.save(config);
         return config.getId();
     }
 
@@ -50,7 +50,7 @@ public class ConfigServiceImpl implements ConfigService {
 
         // 更新参数配置
         ConfigDO updateObj = ConfigConvert.INSTANCE.convert(updateReqVO);
-        configMapper.updateById(updateObj);
+        configRepository.updateByIdSelective(updateObj);
     }
 
     @Override
@@ -62,13 +62,13 @@ public class ConfigServiceImpl implements ConfigService {
             throw exception(CONFIG_CAN_NOT_DELETE_SYSTEM_TYPE);
         }
         // 删除
-        configMapper.deleteById(id);
+        configRepository.deleteByIdLogically(id);
     }
 
     @Override
     public void deleteConfigList(List<Long> ids) {
         // 校验是否有内置配置
-        List<ConfigDO> configs = configMapper.selectByIds(ids);
+        List<ConfigDO> configs = configRepository.selectByIds(ids);
         configs.forEach(config -> {
             if (ConfigTypeEnum.SYSTEM.getType().equals(config.getType())) {
                 throw exception(CONFIG_CAN_NOT_DELETE_SYSTEM_TYPE);
@@ -76,22 +76,22 @@ public class ConfigServiceImpl implements ConfigService {
         });
 
         // 批量删除
-        configMapper.deleteByIds(ids);
+        configRepository.deleteBatchIdsLogically(ids);
     }
 
     @Override
     public ConfigDO getConfig(Long id) {
-        return configMapper.selectById(id);
+        return configRepository.selectById(id);
     }
 
     @Override
     public ConfigDO getConfigByKey(String key) {
-        return configMapper.selectByKey(key);
+        return configRepository.selectByKey(key);
     }
 
     @Override
     public PageResult<ConfigDO> getConfigPage(ConfigPageReqVO pageReqVO) {
-        return configMapper.selectPage(pageReqVO);
+        return configRepository.selectPage(pageReqVO);
     }
 
     @VisibleForTesting
@@ -99,7 +99,7 @@ public class ConfigServiceImpl implements ConfigService {
         if (id == null) {
             return null;
         }
-        ConfigDO config = configMapper.selectById(id);
+        ConfigDO config = configRepository.selectById(id);
         if (config == null) {
             throw exception(CONFIG_NOT_EXISTS);
         }
@@ -108,7 +108,7 @@ public class ConfigServiceImpl implements ConfigService {
 
     @VisibleForTesting
     public void validateConfigKeyUnique(Long id, String key) {
-        ConfigDO config = configMapper.selectByKey(key);
+        ConfigDO config = configRepository.selectByKey(key);
         if (config == null) {
             return;
         }
